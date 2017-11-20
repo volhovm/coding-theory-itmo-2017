@@ -1,0 +1,768 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-11-14 Tue 09:01 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Теория информации, решения задач части 2 (линейные коды)</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Волхов Михаил, M4139" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Теория информации, решения задач части 2 (линейные коды)</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org0973c91">1. 2.1 Оптимальные коды для длины 6</a></li>
+<li><a href="#org3d979b4">2. 2.3/2.7 Подсчет параметров кода</a></li>
+<li><a href="#org28b48e2">3. 2.5 Количество линейных кодов</a></li>
+<li><a href="#orgcf77a88">4. 2.6 Соответствия синдромы/векторы ошибок</a></li>
+<li><a href="#org4f207e0">5. 2.8 Обобщения двоичных полей</a></li>
+<li><a href="#orgee77c82">6. 2.9 Циклические коды</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org0973c91" class="outline-2">
+<h2 id="org0973c91"><span class="section-number-2">1</span> 2.1 Оптимальные коды для длины 6</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Итак, для \(i \in \{1..6\}\) мы хотим построить коды длины \(6\)
+максимизирующие минимальное расстояние \(d\).
+</p>
+
+<p>
+Для (6,1) мы хотим попробовать получить \(d = r + 1 = 6\) (граница
+Синглтона) и это в самом деле возможно: воспользуемся код дуальный к
+коду с проверкой на четность:
+</p>
+
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 0 & 1\\
+0 & 1 & 0 & 0 & 0 & 1\\
+0 & 0 & 1 & 0 & 0 & 1\\
+0 & 0 & 0 & 1 & 0 & 1\\
+0 & 0 & 0 & 0 & 1 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Очевидно что такой код имеет \(d = 6\): любые 5 столбцов &#x2013; это либо
+первые 5 (дают в сумме шестой), либо 4 из первых и последний (дают в
+сумме ровно отсутствующий).
+</p>
+
+<p>
+Далее рассмотрим (6,2) код со следующей проверочной матрицей:
+</p>
+
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 1 & 1\\
+0 & 1 & 0 & 0 & 0 & 1\\
+0 & 0 & 1 & 0 & 1 & 0\\
+0 & 0 & 0 & 1 & 1 & 1\\
+\end{pmatrix}
+\end{align*}
+
+<p>
+В этом случае \(d = 4\), недостижимость \(d = 5\) можно показать
+прямолинейным перебором (но и интуитивно понятно, что невозможно
+получить 4 ЛНЗ столбца).
+</p>
+
+<p>
+Аналогично для (6,3) получаем \(d = 3\).
+</p>
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 0 & 0 & 1 & 0 & 1\\
+0 & 1 & 0 & 1 & 1 & 0\\
+0 & 0 & 1 & 0 & 1 & 1\\
+\end{pmatrix}
+\end{align*}
+
+<p>
+Далее для (6,4) предлагается рассмотреть следующую проверочную
+матрицу:
+</p>
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 1 & 1 & 1 & 1 & 1\\
+1 & 0 & 0 & 0 & 0 & 0\\
+\end{pmatrix}
+\end{align*}
+
+<p>
+На самом деле неважно то, как строить матрицу &#x2013; существует всего 4
+разных вектора длины 2, поэтому матрица содержала бы дубликаты &#x2013;
+почему бы не заполнить ее одним вектором в таком случае? Кстати, \(d\)
+такого кода равен 2, а еще оно проверяет, что вес кодвого слова
+четный и что первый бит &#x2013; всегда ноль.
+</p>
+
+<p>
+То же и для (6,5):
+</p>
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 1 & 1 & 1 & 1 & 1\\
+\end{pmatrix}
+\end{align*}
+
+<p>
+Такой код имеет \(d = 1\) и есть кодом с проверкой на четность.
+</p>
+
+<p>
+Для кода (6,6) применим пример из учебника: \(G = I_6\), а \(H\)
+неопределена поскольку \(r = 0\). Такой код имеет \(d = 1\).
+</p>
+</div>
+</div>
+<div id="outline-container-org3d979b4" class="outline-2">
+<h2 id="org3d979b4"><span class="section-number-2">2</span> 2.3/2.7 Подсчет параметров кода</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Дана проверочная матрица с параметрами \(r = 4\), \(n = 10\), то есть \(k
+  = 6\), отсюда \(R = 3/5\). Поскольку все столбцы различны и ненулевые,
+то \(d \geq 3\), собственно сумма первого, второго и последнего
+столбцов равна нулю, отсюда \(d = 3\).
+</p>
+
+\begin{align*}
+H =
+\begin{pmatrix}
+0 & 0 & 1 & 1 & 0 & 1 & 1 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 1 & 0 & 1 & 1 & 0 \\
+1 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 \\
+0 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Несложными преобразованиями (метод Гаусса, выполнил на бумаге) она
+приводится к следующему виду:
+</p>
+
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 1 & 1 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+1 & 1 & 0 & 1 & 1 & 0 & 0 & 1 & 1 & 0 \\
+1 & 1 & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+0 & 1 & 1 & 1 & 1 & 0 & 0 & 1 & 1 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Из чего сразу следует (поскольку \(G = (I_k P)\)):
+</p>
+
+\begin{align*}
+G =
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 0 & 0 &    1 & 1 & 1 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 &    1 & 1 & 1 & 1 \\
+0 & 0 & 1 & 0 & 0 & 0 &    1 & 0 & 0 & 1 \\
+0 & 0 & 0 & 1 & 0 & 0 &    0 & 1 & 1 & 1 \\
+0 & 0 & 0 & 0 & 1 & 0 &    1 & 1 & 0 & 1 \\
+0 & 0 & 0 & 0 & 0 & 1 &    1 & 0 & 1 & 0
+\end{pmatrix}
+\end{align*}
+
+<p>
+Перейдем к задаче синдромного декодирования.
+</p>
+
+
+<p>
+Реализация алгоритма на haskell (опущена большая часть методов
+реализации алгебры матриц по полю \(F_2\)).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #8AAFFA;">syndromDecodeBuild</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Map</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
+<span style="color: #8AAFFA;">syndromDecodeBuild</span><span style="color: #333333;"> </span>h<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>flip<span style="color: #333333;"> </span>execState<span style="color: #333333;"> </span>mempty<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>forM_<span style="color: #333333;"> </span>allEs<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span><span style="color: #A197BF;">\</span>e<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>syndrom<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>e<span style="color: #333333;"> </span><span style="color: #A197BF;">`vMulM`</span><span style="color: #333333;"> </span>(transpose<span style="color: #333333;"> </span>h)
+<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>updateSyndrom<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>at<span style="color: #333333;"> </span>syndrom<span style="color: #333333;"> </span><span style="color: #A197BF;">?=</span><span style="color: #333333;"> </span>e
+<span style="color: #333333;">    </span>use<span style="color: #333333;"> </span>(at<span style="color: #333333;"> </span>syndrom)<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;&gt;=</span><span style="color: #333333;"> </span><span style="color: #A197BF;">\</span><span style="color: #FFA070;">case</span>
+<span style="color: #333333;">        </span><span style="color: #EF5C5F;">Just</span><span style="color: #333333;"> </span>x<span style="color: #333333;">  </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>when<span style="color: #333333;"> </span>(weight<span style="color: #333333;"> </span>x<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>weight<span style="color: #333333;"> </span>e)<span style="color: #333333;"> </span>updateSyndrom
+<span style="color: #333333;">        </span><span style="color: #EF5C5F;">Nothing</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>updateSyndrom
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>h
+<span style="color: #333333;">    </span>allEs<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]
+<span style="color: #333333;">    </span>allEs<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span>n)
+</pre>
+</div>
+
+<p>
+В результате получили следующую таблицу синдромного декодирования:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="all" frame="border" style="line-height: 7px; width: 100%;">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Синдром</th>
+<th scope="col" class="org-left">Вектор ошибки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">[0,0,0,0]</td>
+<td class="org-left">[0,0,0,0,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,0,0,1]</td>
+<td class="org-left">[0,0,1,0,0,0,1,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,0,1,0]</td>
+<td class="org-left">[0,0,0,0,0,1,1,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,0,1,1]</td>
+<td class="org-left">[0,0,0,0,0,0,0,0,0,1]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,0,0]</td>
+<td class="org-left">[0,0,0,1,0,0,0,0,0,1]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,0,1]</td>
+<td class="org-left">[0,0,0,0,0,0,0,0,1,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,1,0]</td>
+<td class="org-left">[0,0,0,0,0,0,0,0,1,1]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,1,1]</td>
+<td class="org-left">[0,0,0,1,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,0,0]</td>
+<td class="org-left">[0,0,0,0,0,0,1,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,0,1]</td>
+<td class="org-left">[0,0,1,0,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,1,0]</td>
+<td class="org-left">[0,0,0,0,0,1,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,1,1]</td>
+<td class="org-left">[0,0,0,0,0,0,1,0,0,1]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,0,0]</td>
+<td class="org-left">[0,0,0,0,0,0,0,1,0,1]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,0,1]</td>
+<td class="org-left">[0,0,0,0,1,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,1,0]</td>
+<td class="org-left">[1,0,0,0,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,1,1]</td>
+<td class="org-left">[0,0,0,0,0,0,0,1,0,0]</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org28b48e2" class="outline-2">
+<h2 id="org28b48e2"><span class="section-number-2">3</span> 2.5 Количество линейных кодов</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Каждая проверочная матрица порождает какой-то линейный код, плюс
+имеем тривиальный код (n,n), не имеющий проверочной. Поэтому
+суммарное количество возможных кодов для (n,k) есть \(2^{n(n-k)}\)
+если \(k < n\) и еще какое-то количество способов представить \(G =
+  I_n\) в виде \(n\) ЛНЗ столбцов.
+</p>
+
+<p>
+Но это маловажно. Интереснее обратить внимание на то, что, поскольку
+\(H = (P^T I_r)\), и перестановки строк в \(H\) не несут большой
+разницы с точки зрения эквивалентности кодов (имеем один \(P^T\),
+значит одна \(G\), значит один базис), то можно считать что все \(H\) с
+одним \(P\) эквивалентны. Тогда, поскольку размер \(P\) есть \(k \times
+  r\), количество различных \(P\) есть \(2^{kr}\).
+</p>
+
+<p>
+Если \(kr\) достаточно мало, наивный перебор \(P\) может быть эффективен
+для нахождения \(d\) кода.
+</p>
+</div>
+</div>
+<div id="outline-container-orgcf77a88" class="outline-2">
+<h2 id="orgcf77a88"><span class="section-number-2">4</span> 2.6 Соответствия синдромы/векторы ошибок</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Нетрудно применить решение 2.3/2.7 для того чтобы выявить
+соответствие между синдромами и векторами ошибок для кодов
+Хэмминга. Например, рассмотрим \(r = 3\) и код (7, 4) и его синдромную
+таблицу:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="all" frame="border" style="line-height: 7px; width: 100%;">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Синдром</th>
+<th scope="col" class="org-left">Вектор ошибки</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">[0,0,0]</td>
+<td class="org-left">[0,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,0,1]</td>
+<td class="org-left">[1,0,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,0]</td>
+<td class="org-left">[0,1,0,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[0,1,1]</td>
+<td class="org-left">[0,0,1,0,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,0]</td>
+<td class="org-left">[0,0,0,1,0,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,0,1]</td>
+<td class="org-left">[0,0,0,0,1,0,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,0]</td>
+<td class="org-left">[0,0,0,0,0,1,0]</td>
+</tr>
+
+<tr>
+<td class="org-left">[1,1,1]</td>
+<td class="org-left">[0,0,0,0,0,0,1]</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Закономерность очевидна &#x2013; если рассматривать синдром как двоичное
+представление десятичного числа, то это число будет индексом ошибки
+в векторе. Эта закономерность очевидно обобщается на любое \(r\). Она
+имеет место по построению \(H\) &#x2013; каждый ряд \(i \in {1..r}\) имеет
+\(2^i\) "разбиений" на продолжительные последовательности битов
+(первая бьется на две части, вторая на 4, и так далее). Тогда, при
+подсчете синдрома \(y \dot H^T\) мы \(r\) раз уточняем где находится
+единственная ошибка.
+</p>
+</div>
+</div>
+<div id="outline-container-org4f207e0" class="outline-2">
+<h2 id="org4f207e0"><span class="section-number-2">5</span> 2.8 Обобщения двоичных полей</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Я попытаюсь ответить на этот вопрос, хотя он сложный и требует более
+внимательного рассмотрения. Во-первых, начиная с определения
+расстояния между объектами, метрику Хэмминга следует заменить на
+иную. Интуитивно кажется, что Манхэттэнская метрика (расстояние
+Минковского с \(p = 1\)) наиболее близка к расстоянию Хэмминга.
+</p>
+
+<p>
+Теорема 2.1 о количестве исправлений ошибок не должна меняться,
+поскольку ее доказательство оперирует абстрактной метрикой, то есть
+всё же \(\lfloor (d-1)/2 \rfloor\) ошибок код будет исправлять.
+</p>
+
+<p>
+Теорема 2.2 также не меняет смысл, если определить вес \(w(x)\) как
+сумму расстояний от \(0\) до символа (в нашем случае с манхэттэнской
+метрикой это просто разница, так что \(w\) это сумма).
+</p>
+</div>
+</div>
+<div id="outline-container-orgee77c82" class="outline-2">
+<h2 id="orgee77c82"><span class="section-number-2">6</span> 2.9 Циклические коды</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Порождающая матрица кода полученного из \(( 1 1 0 1 0 0 0 )\) будет
+выглядеть так:
+</p>
+
+\begin{align*}
+G =
+\begin{pmatrix}
+1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+0 & 1 & 1 & 0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 1 & 0 & 1 & 0 \\
+0 & 0 & 0 & 1 & 1 & 0 & 1
+\end{pmatrix}
+=
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 1 & 1 & 0 \\
+0 & 1 & 0 & 0 & 0 & 1 & 1 \\
+0 & 0 & 1 & 0 & 1 & 1 & 1 \\
+0 & 0 & 0 & 1 & 1 & 0 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Проверочная матрица :
+</p>
+
+\begin{align*}
+H =
+\begin{pmatrix}
+1 & 0 & 1 & 1 & 1 & 0 & 0 \\
+1 & 1 & 1 & 0 & 0 & 1 & 0 \\
+0 & 1 & 1 & 1 & 0 & 0 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Отсюда делаем вывод, что \(d = 3\). Увеличение длины \(g\) (\(n\)) засчет
+добавления нулей в конец приведет лишь к тому что последние столбцы
+\(P\) будут нулевыми. Например, для \(n = 8\):
+</p>
+
+\begin{align*}
+G_8 =
+\begin{pmatrix}
+1 & 1 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 1 & 1 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 1 & 1 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 & 1 & 0 & 1 & 0
+\end{pmatrix}
+=
+\begin{pmatrix}
+1 & 0 & 0 & 0 & 1 & 1 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 1 & 1 & 0 \\
+0 & 0 & 1 & 0 & 1 & 1 & 1 & 0 \\
+0 & 0 & 0 & 1 & 1 & 0 & 1 & 0
+\end{pmatrix}
+\end{align*}
+
+
+\begin{align*}
+H_8 =
+\begin{pmatrix}
+1 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
+1 & 1 & 1 & 0 & 0 & 1 & 0 & 0 \\
+0 & 1 & 1 & 1 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{pmatrix}
+\end{align*}
+
+<p>
+Заметим, что на \(d\) это преобразование не повлияет, так как те же
+столбцы что были независимы в \(H\) будут зависимы и в \(H_8\). Понятно,
+что такое строгое ограничение на форму порождающей матрицы отразится
+на минимальном расстоянии &#x2013; циклических кодов меньше и поэтому они
+в среднем хуже. Лучший линейный код (7,4) имеет \(d = 3\) (как
+рассмотренный из примера), а вот лучший (8,4) имеет \(d = 4\), что
+уже больше.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Волхов Михаил, M4139</p>
+<p class="date">Created: 2017-11-14 Tue 09:01</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
