@@ -3,17 +3,17 @@
 -- | Solutions for part 2
 
 module Part2
-    ( task21
-    , task7
+    ( task7
     , task6
+    , task215
     ) where
 
-import           Control.Lens (at, (?=))
-import           Data.Choose  hiding (at)
-import           Data.List    ((!!))
-import qualified Data.Map     as M
-import           Universum    hiding (transpose)
-import           Unsafe       (unsafeHead)
+import           Control.Lens    (at, ix, (?=))
+import qualified Data.HashSet    as HS
+import           Data.List       (delete, (!!), (\\))
+import           Data.Map.Strict ((!))
+import           Universum       hiding (transpose)
+import           Unsafe          (unsafeHead)
 
 -- Vertical vector
 type BVector = [Bool]
@@ -22,7 +22,7 @@ showVec :: BVector -> String
 showVec = map $ bool '0' '1'
 
 -- | Produces a list of binary vectors of length n.
-binaryVectors :: Integer -> [BVector]
+binaryVectors :: (Integral n) => n -> [BVector]
 binaryVectors = binGen
   where
     binGen 0 = [[]]
@@ -63,42 +63,34 @@ allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs
 
 linearDependent :: [BVector] -> Bool
 linearDependent [] = False
-linearDependent vectors = or cases
+linearDependent vectors
+    | any (== zero) vectors = False
+    | otherwise = or $ map ((== zero) . sumAll) ps
   where
-    cases :: [Bool]
-    cases = do
-        c <- ps
-        let cases2 :: [BVector] -> [Bool]
-            cases2 es = do
-                x <- [0..(length es-1)]
-                let part1 = take x es
-                let e = unsafeHead $ drop x es
-                let part2 = drop (x+1) es
-                let other = part1 <> part2
-                pure $ sumAll other == e
-        pure $ or (cases2 c)
+    n = length $ unsafeHead vectors
+    zero = replicate n False
     sumAll :: [BVector] -> BVector
     sumAll = foldr sumBVectors (replicate (length $ unsafeHead vectors) False)
     ps :: [[BVector]]
     ps = allCombinations vectors
 
-distance :: [BVector] -> Integer
-distance matrix = fromMaybe 0 $ find hasDistance $ reverse [1..maxRank]
-  where
-    hasDistance :: Integer -> Bool
-    hasDistance i =
-        all (\c -> not (linearDependent c)) $ combinations i matrix
-    n = length (unsafeHead matrix)
-    k = length matrix
-    maxRank :: Integer
-    maxRank = toInteger $ min n k
-
-task21 :: Integer -> Integer -> ([BVector], Integer)
-task21 n k =
-    maximumBy (compare `on` snd) $ map (\m -> (m,distance m)) matrices
-  where
-    r = n - k
-    matrices = combinations n $ binaryVectors r
+--distance :: [BVector] -> Integer
+--distance matrix = fromMaybe 0 $ find hasDistance $ reverse [1..maxRank]
+--  where
+--    hasDistance :: Integer -> Bool
+--    hasDistance i =
+--        all (\c -> not (linearDependent c)) $ combinations i matrix
+--    n = length (unsafeHead matrix)
+--    k = length matrix
+--    maxRank :: Integer
+--    maxRank = toInteger $ min n k
+--
+--task21 :: Integer -> Integer -> ([BVector], Integer)
+--task21 n k =
+--    maximumBy (compare `on` snd) $ map (\m -> (m,distance m)) matrices
+--  where
+--    r = n - k
+--    matrices = combinations n $ binaryVectors r
 
 weight :: BVector -> Integer
 weight = sum . map (bool 0 1)
@@ -127,7 +119,7 @@ syndromDecodeBuild h = flip execState mempty $ forM_ allEs $ \e -> do
   where
     n = length h
     allEs :: [BVector]
-    allEs = binaryVectors (fromIntegral n)
+    allEs = binaryVectors n
 
 task7 :: Map BVector BVector
 task7 = syndromDecodeBuild h
@@ -144,6 +136,7 @@ task7 = syndromDecodeBuild h
         , [0,1,0,1]
         , [0,0,1,1] ]
 
+
 task6 :: Map BVector BVector
 task6 = syndromDecodeBuild h
   where
@@ -152,38 +145,118 @@ task6 = syndromDecodeBuild h
 -- | Returns complete list of code vectors by H.
 codeH :: [BVector] -> [BVector]
 codeH h = filter (\y -> y `vMulM` (transpose h) == replicate r False)
-                 (binaryVectors (fromIntegral n))
+                 (binaryVectors n)
   where
     n = length h
     r = length (unsafeHead h)
 
-codeRadius :: [BVector] -> (Integer, BVector, BVector)
+-- | Given matrix H, returns (r,v1,v2) -- code radius r, vector v1
+-- (not in code).
+codeRadius :: [BVector] -> (Integer, BVector)
 codeRadius h =
     maximumBy (comparing $ view _1) $
-    map (\y -> let d = decode y in (weight (decode y `sumBVectors` y), y, d))
-        (binaryVectors $ fromIntegral n)
+    map (\y -> (distToCodewords y, y))
+        (binaryVectors n)
   where
+    distToCodewords x = minimum $ map (dist x) codewords
+    dist x y = weight $ x `sumBVectors` y
+    codewords = codeH h
+    n = length h
+
+-- List of matrices
+task21Hs :: [[BVector]]
+task21Hs = map (map fromIntVector) [h1,h2,h3,h4,h5]
+  where
+    h1 = [[1,0,0,0,0],[0,1,0,0,0],[0,0,1,0,0],[0,0,0,1,0],[0,0,0,0,1],[1,1,1,1,1]]
+    h2 = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,1,1],[1,1,0,1]]
+    h3 = [[1,0,0],[0,1,0],[0,0,1],[1,1,0],[0,1,1],[1,0,1]]
+    h4 = [[1,1],[1,0],[1,0],[1,0],[1,0],[1,0]]
+    h5 = [[1],[1],[1],[1],[1],[1]]
+
+
+task12 :: IO ()
+task12 =
+    forM_ task21Hs $ \h -> do
+      print $ (map showVec) $ codeH h
+      print $ (\(a,b) -> (a,showVec b)) $ codeRadius h
+
+buildZeroNN :: [BVector] -> [BVector]
+buildZeroNN h =
+    traceShow (map showVec d0) $
+    traceShow (map showVec $ solvingArea zero) $
+    fromMaybe (error "should exist") $ find zCondition $ allCombinations $ codeH h
+  where
+--    kickWhilePossible $ delete zero $ codeH h
+--  where
+--    kickWhilePossible :: [BVector] -> [BVector]
+--    kickWhilePossible zCandidate =
+--        case find (\e -> zCondition $ delete e zCandidate) zCandidate of
+--            Just x  -> kickWhilePossible (delete x zCandidate)
+--            Nothing -> zCandidate
+    zCondition :: [BVector] -> Bool
+    zCondition zCandidate =
+        let union = HS.fromList $ concat $ map solvingArea zCandidate
+        in all (`HS.member` union) d0
+
+    n = length h
+
+    zero = replicate n False
+    d0 = neighborhood $ solvingArea zero
+
+    solvingArea :: BVector -> [BVector]
+    solvingArea a = filter ((== a) . decode) $ binaryVectors n
+
+    -- decoding
+    syndromMap = syndromDecodeBuild h
     decode :: BVector -> BVector
     decode y = do
         let syndrom = y `vMulM` transpose h
-        let err = fromMaybe (error "can't happen") $ M.lookup syndrom decodeMap
-        y `sumBVectors` err
-    decodeMap = syndromDecodeBuild h
-    n = length h
+        let e = syndromMap ! syndrom
+        y `sumBVectors` e
 
-task12 :: IO ()
-task12 = do
-    print $ map showVec $ codeH h
-    print $ (\(a,b,c) -> (a,showVec b,showVec c)) $ codeRadius h
+    -- Calculates closest neighborhood by solving area
+    neighborhood :: [BVector] -> [BVector]
+    neighborhood sA = filter (\x -> x `notElem` sA && invertedIn x)
+                              (binaryVectors (length $ unsafeHead sA))
+      where
+        invertedIn x =
+            let invertedSet =
+                    mapMaybe (\i -> if x !! i then Just (x & ix i .~ False) else Nothing)
+                             [0..length x-1]
+            in any (`elem` sA) invertedSet
+
+-- | You pass code, y, it returns c.
+decodeZeroNN :: [BVector] -> BVector -> BVector
+decodeZeroNN h x0 = go (zero,x0)
   where
-    h = map fromIntVector $
-        [ [1,1,1,0]
-        , [1,1,1,1]
-        , [1,0,0,1]
-        , [0,1,1,1]
-        , [1,1,0,1]
-        , [1,0,1,0]
-        , [1,0,0,0]
-        , [1,1,1,1]
-        , [0,1,0,1]
-        , [0,0,1,1] ]
+    go (c,x) =
+        case find (\v -> weight (x `sumBVectors` v) < weight x) zNN of
+            Nothing -> c
+            Just v  -> go (c `sumBVectors` v, x `sumBVectors` v)
+
+    zero = replicate (length h) False
+    zNN = buildZeroNN h
+
+task215 :: IO ()
+task215 =
+    forM_ task21Hs $ \h -> do
+        print $ (map showVec) $ codeH h
+        putText "~~~~~~~~~~~~~~~~~~~~~"
+        print $ map showVec $ buildZeroNN h
+        putText "---------------------"
+
+
+hamming74G =
+    map fromIntVector $
+    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[0,1,1,1],[0,0,1,1],[0,1,0,1]]
+hamming84G =
+    map fromIntVector $
+    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+
+--hammingEx84 = map (++[True]) $ binaryVectors 3
+
+task216 :: IO ()
+task216 = do
+    let rankk k x = length $ filter (not . linearDependent) $ combinations k x
+    print  $ rankk 4 hamming74G
+    print  $ rankk 4 hamming84G
