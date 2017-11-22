@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2017-11-21 Tue 07:52 -->
+<!-- 2017-11-21 Tue 22:34 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Теория информации, решения задач части 2 (14-16) (линейные коды)</title>
@@ -255,18 +255,18 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org9723a9e">1. 2.14 Радиус покрытия</a></li>
-<li><a href="#orgbd728c2">2. 2.15 Декодирование по соседям нулевого слова</a></li>
-<li><a href="#orgfd49ebc">3. 2.16 Декодирование по информационным совокупностям</a></li>
-<li><a href="#org6605cc1">4. Приложение 1</a></li>
-<li><a href="#org4153a7a">5. Приложение 2</a></li>
-<li><a href="#org75acf77">6. Приложение 3</a></li>
+<li><a href="#org32d3f08">1. 2.14 Радиус покрытия</a></li>
+<li><a href="#orgbc5de81">2. 2.15 Декодирование по соседям нулевого слова</a></li>
+<li><a href="#orgd85fb7e">3. 2.16 Декодирование по информационным совокупностям</a></li>
+<li><a href="#orgbe01d3e">4. Приложение 1</a></li>
+<li><a href="#org240171a">5. Приложение 2</a></li>
+<li><a href="#org6e8158c">6. Приложение 3</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org9723a9e" class="outline-2">
-<h2 id="org9723a9e"><span class="section-number-2">1</span> 2.14 Радиус покрытия</h2>
+<div id="outline-container-org32d3f08" class="outline-2">
+<h2 id="org32d3f08"><span class="section-number-2">1</span> 2.14 Радиус покрытия</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Итак, задача состоит в том чтобы подсчитать радиус покрытия кодов из
@@ -425,8 +425,8 @@ H_5 =
 </p>
 </div>
 </div>
-<div id="outline-container-orgbd728c2" class="outline-2">
-<h2 id="orgbd728c2"><span class="section-number-2">2</span> 2.15 Декодирование по соседям нулевого слова</h2>
+<div id="outline-container-orgbc5de81" class="outline-2">
+<h2 id="orgbc5de81"><span class="section-number-2">2</span> 2.15 Декодирование по соседям нулевого слова</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Код реализованного алгоритма находится в приложении 2. Он использует
@@ -483,8 +483,8 @@ H_5 =
 </p>
 </div>
 </div>
-<div id="outline-container-orgfd49ebc" class="outline-2">
-<h2 id="orgfd49ebc"><span class="section-number-2">3</span> 2.16 Декодирование по информационным совокупностям</h2>
+<div id="outline-container-orgd85fb7e" class="outline-2">
+<h2 id="orgd85fb7e"><span class="section-number-2">3</span> 2.16 Декодирование по информационным совокупностям</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 Будем проверять все комбинации размера 4 строк \(G\) на линейную
@@ -493,37 +493,47 @@ H_5 =
 </p>
 
 \begin{align*}
+H_1 =
+\begin{pmatrix}
+0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+1 & 0 & 1 & 0 & 1 & 0 & 1
+\end{pmatrix}
+,
 G_1 =
 \begin{pmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 & 1 & 0 & 1 \\
-0 & 0 & 1 & 0 & 1 & 1 & 0 \\
-0 & 0 & 0 & 1 & 1 & 1 & 1
+0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+0 & 0 & 1 & 0 & 1 & 1 & 0
 \end{pmatrix}
 \end{align*}
 
 <p>
-Алгоритм выдал для нее 16 наборов ЛНЗ столбцов, то есть количество
-информационных совокупностей.
-</p>
-
-<p>
-Матрица \(H\) расширенного кода Хэмминга (8,4) приведенная к
-систематическому виду оказалась равной матрице \(G\):
+Алгоритм выдал для нее 28 (из 35 возмжоных) наборов ЛНЗ столбцов, то
+есть количество информационных совокупностей.
 </p>
 
 \begin{align*}
-G_2 =
+H2 =
 \begin{pmatrix}
-1 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 & 0 & 1 & 0 & 0 \\
-0 & 0 & 1 & 0 & 0 & 0 & 1 & 0 \\
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 1
+0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+1 & 1 & 1 & 1 & 1 & 1 & 1 & 1
+\end{pmatrix}
+,
+G2 =
+\begin{pmatrix}
+0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+1 & 0 & 0 & 1 & 0 & 1 & 1 & 0
 \end{pmatrix}
 \end{align*}
 
 <p>
-И она также имеет 16 информационных совокупностей.
+Матрица G2 имеет 56 (из 70 возможных) информационных совокупностей.
 </p>
 
 <p>
@@ -534,8 +544,8 @@ G_2 =
 </p>
 </div>
 </div>
-<div id="outline-container-org6605cc1" class="outline-2">
-<h2 id="org6605cc1"><span class="section-number-2">4</span> Приложение 1</h2>
+<div id="outline-container-orgbe01d3e" class="outline-2">
+<h2 id="orgbe01d3e"><span class="section-number-2">4</span> Приложение 1</h2>
 <div class="outline-text-2" id="text-4">
 <div class="org-src-container">
 <pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">Given</span><span style="color: #333333;"> </span><span style="color: #868B44;">matrix</span><span style="color: #333333;"> </span><span style="color: #868B44;">H,</span><span style="color: #333333;"> </span><span style="color: #868B44;">returns</span><span style="color: #333333;"> </span><span style="color: #868B44;">(r,v1,v2)</span><span style="color: #333333;"> </span><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">code</span><span style="color: #333333;"> </span><span style="color: #868B44;">radius</span><span style="color: #333333;"> </span><span style="color: #868B44;">r,</span><span style="color: #333333;"> </span><span style="color: #868B44;">vector</span><span style="color: #333333;"> </span><span style="color: #868B44;">v1</span>
@@ -557,8 +567,8 @@ G_2 =
 </div>
 </div>
 </div>
-<div id="outline-container-org4153a7a" class="outline-2">
-<h2 id="org4153a7a"><span class="section-number-2">5</span> Приложение 2</h2>
+<div id="outline-container-org240171a" class="outline-2">
+<h2 id="org240171a"><span class="section-number-2">5</span> Приложение 2</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Код реализованного алгоритма нахождения множества соседей нулевого
@@ -658,8 +668,8 @@ H5:
 </pre>
 </div>
 </div>
-<div id="outline-container-org75acf77" class="outline-2">
-<h2 id="org75acf77"><span class="section-number-2">6</span> Приложение 3</h2>
+<div id="outline-container-org6e8158c" class="outline-2">
+<h2 id="org6e8158c"><span class="section-number-2">6</span> Приложение 3</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Код, вычисляющий количество информационных совокупностей.
@@ -679,19 +689,47 @@ H5:
 <span style="color: #333333;">    </span>ps<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span>[[<span style="color: #EF5C5F;">BVector</span>]]
 <span style="color: #333333;">    </span>ps<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>allCombinations<span style="color: #333333;"> </span>vectors
 
+<span style="color: #8AAFFA;">findGfromH</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]
+<span style="color: #8AAFFA;">findGfromH</span><span style="color: #333333;"> </span>h<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
+<span style="color: #333333;">    </span>fromMaybe<span style="color: #333333;"> </span>(error<span style="color: #333333;"> </span><span style="color: #868B44;">"can't</span><span style="color: #333333;"> </span><span style="color: #868B44;">happen2"</span>)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
+<span style="color: #333333;">    </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>g<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>formsBasis<span style="color: #333333;"> </span>g<span style="color: #333333;"> </span><span style="color: #A197BF;">&amp;&amp;</span><span style="color: #333333;"> </span>givesNull<span style="color: #333333;"> </span>g)<span style="color: #333333;"> </span>allPossibleG
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>formsBasis<span style="color: #333333;"> </span>g<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>not<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>linearDependent<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>transpose<span style="color: #333333;"> </span>g
+<span style="color: #333333;">    </span>givesNull<span style="color: #333333;"> </span>g<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>isNullM<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>g<span style="color: #333333;"> </span><span style="color: #A197BF;">`mMulM`</span><span style="color: #333333;"> </span>transpose<span style="color: #333333;"> </span>h
+
+<span style="color: #333333;">    </span>allPossibleG<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>combinations<span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span>n)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>k
+<span style="color: #333333;">    </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>h
+<span style="color: #333333;">    </span>r<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>unsafeHead<span style="color: #333333;"> </span>h
+<span style="color: #333333;">    </span>k<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">-</span><span style="color: #333333;"> </span>r
+
+<span style="color: #8AAFFA;">hamming74H</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>drop<span style="color: #333333;"> </span>1<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>3
+<span style="color: #8AAFFA;">hamming74G</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>findGfromH<span style="color: #333333;"> </span>hamming74H
+<span style="color: #8AAFFA;">hammingE84H</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">++</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">True</span>])<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>3
+<span style="color: #8AAFFA;">hammingE84G</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>findGfromH<span style="color: #333333;"> </span>hammingE84H
+
 <span style="color: #8AAFFA;">task216</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">()</span>
 <span style="color: #8AAFFA;">task216</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
 <span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>rankk<span style="color: #333333;"> </span>k<span style="color: #333333;"> </span>x<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>filter<span style="color: #333333;"> </span>(not<span style="color: #333333;"> </span><span style="color: #A197BF;">.</span><span style="color: #333333;"> </span>linearDependent)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>combinations<span style="color: #333333;"> </span>k<span style="color: #333333;"> </span>x
-<span style="color: #333333;">    </span>print<span style="color: #333333;">  </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>rankk<span style="color: #333333;"> </span>4<span style="color: #333333;"> </span>hamming74G
-<span style="color: #333333;">    </span>print<span style="color: #333333;">  </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>rankk<span style="color: #333333;"> </span>4<span style="color: #333333;"> </span>hamming84G
+<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span>hamming74H
+<span style="color: #333333;">    </span>putText<span style="color: #333333;"> </span><span style="color: #868B44;">"---"</span>
+<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span>hamming74G
+<span style="color: #333333;">    </span>print<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>rankk<span style="color: #333333;"> </span>4<span style="color: #333333;"> </span>hamming74G
+<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span>hammingE84H
+<span style="color: #333333;">    </span>putText<span style="color: #333333;"> </span><span style="color: #868B44;">"---"</span>
+<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span>hammingE84G
+<span style="color: #333333;">    </span>print<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>rankk<span style="color: #333333;"> </span>4<span style="color: #333333;"> </span>hammingE84G
 </pre>
 </div>
+
+<p>
+Код, выч
+</p>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Волхов Михаил, M4139</p>
-<p class="date">Created: 2017-11-21 Tue 07:52</p>
+<p class="date">Created: 2017-11-21 Tue 22:34</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

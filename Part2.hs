@@ -6,6 +6,7 @@ module Part2
     ( task7
     , task6
     , task215
+    , task216
     ) where
 
 import           Control.Lens    (at, ix, (?=))
@@ -20,6 +21,9 @@ type BVector = [Bool]
 
 showVec :: BVector -> String
 showVec = map $ bool '0' '1'
+
+showM :: [BVector] -> String
+showM = intercalate "\n" . map showVec . transpose
 
 -- | Produces a list of binary vectors of length n.
 binaryVectors :: (Integral n) => n -> [BVector]
@@ -64,7 +68,7 @@ allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs
 linearDependent :: [BVector] -> Bool
 linearDependent [] = False
 linearDependent vectors
-    | any (== zero) vectors = False
+    | any (== zero) vectors = True
     | otherwise = or $ map ((== zero) . sumAll) ps
   where
     n = length $ unsafeHead vectors
@@ -108,6 +112,18 @@ transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
 
 vMulM :: BVector -> [BVector] -> BVector
 vMulM v m = map (scalar v) m
+
+mMulM :: [BVector] -> [BVector] -> [BVector]
+mMulM a b = transpose $ map (`vMulM` b) $ transpose a
+
+isNullM :: [BVector] -> Bool
+isNullM = all (all (== False))
+
+testmmulm :: IO ()
+testmmulm = do
+    let g = map fromIntVector [[1,0],[0,1],[1,1]]
+    let h = map fromIntVector [[1],[1],[1]]
+    print $ map showVec $ g `mMulM` (transpose h)
 
 syndromDecodeBuild :: [BVector] -> Map BVector BVector
 syndromDecodeBuild h = flip execState mempty $ forM_ allEs $ \e -> do
@@ -245,18 +261,34 @@ task215 =
         print $ map showVec $ buildZeroNN h
         putText "---------------------"
 
+findGfromH :: [BVector] -> [BVector]
+findGfromH h =
+    fromMaybe (error "can't happen2") $
+    find (\g -> formsBasis g && givesNull g) allPossibleG
+  where
+    formsBasis g = not $ linearDependent $ transpose g
+    givesNull g = isNullM $ g `mMulM` transpose h
 
-hamming74G =
-    map fromIntVector $
-    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[0,1,1,1],[0,0,1,1],[0,1,0,1]]
-hamming84G =
-    map fromIntVector $
-    [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
+    n = length h
+    r = length $ unsafeHead h
+    k = n - r
 
---hammingEx84 = map (++[True]) $ binaryVectors 3
+hamming74H = drop 1 $ binaryVectors 3
+hamming74G = findGfromH hamming74H
+hammingE84H = map (++ [True]) $ binaryVectors 3
+hammingE84G = findGfromH hammingE84H
 
 task216 :: IO ()
 task216 = do
     let rankk k x = length $ filter (not . linearDependent) $ combinations k x
-    print  $ rankk 4 hamming74G
-    print  $ rankk 4 hamming84G
+    putStrLn $ showM hamming74H
+    putText "---"
+    putStrLn $ showM hamming74G
+    print $ rankk 4 hamming74G
+    print $ length $ combinations 4 [1..7]
+    putStrLn $ showM hammingE84H
+    putText "---"
+    putStrLn $ showM hammingE84G
+    print $ rankk 4 hammingE84G
+    print $ length $ combinations 4 [1..8]

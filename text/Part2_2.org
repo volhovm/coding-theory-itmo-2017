@@ -117,32 +117,44 @@
   Хэмминга (7,4):
 
   \begin{align*}
+  H_1 =
+  \begin{pmatrix}
+  0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  1 & 0 & 1 & 0 & 1 & 0 & 1
+  \end{pmatrix}
+  ,
   G_1 =
   \begin{pmatrix}
-  1 & 0 & 0 & 0 & 0 & 0 & 0 \\
-  0 & 1 & 0 & 0 & 1 & 0 & 1 \\
-  0 & 0 & 1 & 0 & 1 & 1 & 0 \\
-  0 & 0 & 0 & 1 & 1 & 1 & 1
+  0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+  0 & 0 & 1 & 0 & 1 & 1 & 0
   \end{pmatrix}
   \end{align*}
 
-  Алгоритм выдал для нее 16 наборов ЛНЗ столбцов, то есть количество
-  информационных совокупностей.
-
-  Матрица $H$ расширенного кода Хэмминга (8,4) приведенная к
-  систематическому виду оказалась равной матрице $G$:
+  Алгоритм выдал для нее 28 (из 35 возмжоных) наборов ЛНЗ столбцов, то
+  есть количество информационных совокупностей.
 
   \begin{align*}
-  G_2 =
+  H2 =
   \begin{pmatrix}
-  1 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
-  0 & 1 & 0 & 0 & 0 & 1 & 0 & 0 \\
-  0 & 0 & 1 & 0 & 0 & 0 & 1 & 0 \\
-  0 & 0 & 0 & 1 & 0 & 0 & 0 & 1
+  0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+  1 & 1 & 1 & 1 & 1 & 1 & 1 & 1
+  \end{pmatrix}
+  ,
+  G2 =
+  \begin{pmatrix}
+  0 & 0 & 0 & 0 & 1 & 1 & 1 & 1 \\
+  0 & 0 & 1 & 1 & 0 & 0 & 1 & 1 \\
+  0 & 1 & 0 & 1 & 0 & 1 & 0 & 1 \\
+  1 & 0 & 0 & 1 & 0 & 1 & 1 & 0
   \end{pmatrix}
   \end{align*}
 
-  И она также имеет 16 информационных совокупностей.
+  Матрица G2 имеет 56 (из 70 возможных) информационных совокупностей.
 
   Опять-таки, ссылаясь на доказательства в главе 2.6.3, декодирование
   по информационным совокупностям будет быстрее для любого $R$, так
@@ -275,10 +287,35 @@
       ps :: [[BVector]]
       ps = allCombinations vectors
 
+  findGfromH :: [BVector] -> [BVector]
+  findGfromH h =
+      fromMaybe (error "can't happen2") $
+      find (\g -> formsBasis g && givesNull g) allPossibleG
+    where
+      formsBasis g = not $ linearDependent $ transpose g
+      givesNull g = isNullM $ g `mMulM` transpose h
+
+      allPossibleG = combinations (fromIntegral n) $ binaryVectors k
+      n = length h
+      r = length $ unsafeHead h
+      k = n - r
+
+  hamming74H = drop 1 $ binaryVectors 3
+  hamming74G = findGfromH hamming74H
+  hammingE84H = map (++ [True]) $ binaryVectors 3
+  hammingE84G = findGfromH hammingE84H
+
   task216 :: IO ()
   task216 = do
       let rankk k x = length $ filter (not . linearDependent) $ combinations k x
-      print  $ rankk 4 hamming74G
-      print  $ rankk 4 hamming84G
-
+      putStrLn $ showM hamming74H
+      putText "---"
+      putStrLn $ showM hamming74G
+      print $ rankk 4 hamming74G
+      putStrLn $ showM hammingE84H
+      putText "---"
+      putStrLn $ showM hammingE84G
+      print $ rankk 4 hammingE84G
   #+END_SRC
+
+  Код, выч
