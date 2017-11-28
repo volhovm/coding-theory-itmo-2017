@@ -2,12 +2,15 @@
 
 module Main where
 
-import           Universum
+import Universum
 
-import           Part2     (task215)
+import Part2
 
 main :: IO ()
 main = do
-    putText "starting"
-    task215
-    putText "done"
+    let n = 18
+    let k = 3
+    print $ findDRange n k
+    let h = buildGilbertVarshamovH n k
+    print $ distance h
+    putStrLn $ showM h

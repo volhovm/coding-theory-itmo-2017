@@ -11,14 +11,19 @@ module Part2
     , task6
     , task215
     , task216
+    , findDRange
+    , buildGilbertVarshamovH
+    , distance
+    , showM
     ) where
 
 import Control.Lens (at, ix, (?=))
 import qualified Data.HashSet as HS
 import Data.List ((!!))
 import Data.Map.Strict ((!))
+import Graphics.EasyPlot
 import Universum hiding (transpose)
-import Unsafe (unsafeHead)
+import Unsafe (unsafeHead, unsafeLast)
 
 -- Vertical vector
 type BVector = [Bool]
@@ -66,39 +71,47 @@ combinations n xs = do y:xs' <- tails xs
                        ys <- combinations (n-1) xs'
                        return (y:ys)
 
+combinationsN :: Integer -> Integer -> Integer
+combinationsN n k = (fact n) `div` (fact k) `div` (fact $ n - k)
+  where
+    fact (x :: Integer) = product [1..x]
+
+log2 :: Floating a => a -> a
+log2 x = log x / log 2
+
 allCombinations :: [a] -> [[a]]
 allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs)]
 
-linearDependent :: [BVector] -> Bool
-linearDependent [] = False
-linearDependent vectors
+-- | Checks if any combination of weight <= d are linear dependent.
+linearDependentSubset :: Integer -> [BVector] -> Bool
+linearDependentSubset _ [] = False
+linearDependentSubset d vectors
     | any (== zero) vectors = True
     | otherwise = or $ map ((== zero) . sumAll) ps
   where
     n = length $ unsafeHead vectors
     zero = replicate n False
     sumAll :: [BVector] -> BVector
-    sumAll = foldr sumBVectors (replicate (length $ unsafeHead vectors) False)
+    sumAll = foldr sumBVectors $ replicate (length $ unsafeHead vectors) False
     ps :: [[BVector]]
-    ps = allCombinations vectors
+    ps = concatMap (flip combinations vectors) [1..(min d (fromIntegral $ length vectors))]
 
---distance :: [BVector] -> Integer
---distance matrix = fromMaybe 0 $ find hasDistance $ reverse [1..maxRank]
---  where
---    hasDistance :: Integer -> Bool
---    hasDistance i =
---        all (\c -> not (linearDependent c)) $ combinations i matrix
---    n = length (unsafeHead matrix)
---    k = length matrix
---    maxRank :: Integer
---    maxRank = toInteger $ min n k
---
---task21 :: Integer -> Integer -> ([BVector], Integer)
---task21 n k =
---    maximumBy (compare `on` snd) $ map (\m -> (m,distance m)) matrices
---  where
---    r = n - k
---    matrices = combinations n $ binaryVectors r
+
+-- | Checks if any combination of given vectors can be linear dependent.
+linearDependent :: [BVector] -> Bool
+linearDependent vectors =
+    linearDependentSubset (fromIntegral $ length vectors) vectors
+
+distance :: [BVector] -> Integer
+distance matrix =
+    (+1) $ fromMaybe 0 $ find hasDistance $ reverse [1..maxRank]
+  where
+    hasDistance :: Integer -> Bool
+    hasDistance i = not (linearDependentSubset i matrix)
+    n = length (unsafeHead matrix)
+    k = length matrix
+    maxRank :: Integer
+    maxRank = toInteger $ min n k
 
 weight :: BVector -> Integer
 weight = sum . map (bool 0 1)
@@ -290,9 +303,49 @@ task216 = do
     putText "---"
     putStrLn $ showM hamming74G
     print $ rankk 4 hamming74G
-    print $ length $ combinations 4 [1..(7::Int)]
+    print $ combinationsN 7 4
     putStrLn $ showM hammingE84H
     putText "---"
     putStrLn $ showM hammingE84G
     print $ rankk 4 hammingE84G
-    print $ length $ combinations 4 [1..(8::Int)]
+    print $ combinationsN 8 4
+
+findDRange :: Integer -> Integer -> (Integer,Integer)
+findDRange n k = (lastB hammingCond [1..n], lastB gilbertVarshamovCond [1..n])
+  where
+    lastB cond = unsafeLast . takeWhile cond
+    cast :: (Integral a, Num b) => a -> b
+    cast = fromIntegral
+    hammingCond :: Integer -> Bool
+    hammingCond d =
+        let t = (d - 1) `div` 2
+        in (2.0^k::Double) <= ((2.0^n) / (cast (sum $ map (combinationsN n) [0..t]) :: Double))
+    gilbertVarshamovCond :: Integer -> Bool
+    gilbertVarshamovCond d = 2^(n-k) > (sum $ map (combinationsN $ n -1) [0..(d-2)])
+
+
+buildGilbertVarshamovH :: Integer -> Integer -> [BVector]
+buildGilbertVarshamovH n k = genVectors (n-1) [initVec]
+  where
+    genVectors 0 acc = acc
+    genVectors l acc =
+        let a = fromMaybe (error "couldn't find one") $
+                find (\x -> not $ linearDependentSubset (d-1) (x:acc)) (binaryVectors r)
+        in genVectors (l-1) (a:acc)
+
+    d = snd $ findDRange n k
+    r = n - k
+    -- Vector 00..01 of length r
+    initVec = True : replicate (fromIntegral $ r-1) False
+
+illustrateGVH :: IO ()
+illustrateGVH = do
+    void $ plot (PNG "kek.png")
+        [ Function2D [Title "Hamming"] [Range 1 22]
+          (\(round -> k) -> fst $ findDRange (2*k) k)
+        , Function2D [Title "Gilbert-Varshamov"] [Range 1 22]
+          (\(round -> k) -> snd $ findDRange (2*k) k)
+        , Data2D [Title "Best known"] [] realData
+        ]
+  where
+    realData = [(4,4),(5,4),(6,4),(7,4),(8,5),(9,6),(10,6),(11,7),(12,8), (13,7),(14,8),(15,8),(16,8),(17,8),(18,8),(19,9),(20,10)]

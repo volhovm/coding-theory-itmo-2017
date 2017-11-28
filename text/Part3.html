@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2017-11-28 Tue 13:39 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Теория информации, решения задач части 3</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Волхов Михаил, M4139" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Теория информации, решения задач части 3</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org7a18e7f">1. Задание 3.1</a></li>
+<li><a href="#org5ceb856">2. Задание 3.2</a></li>
+<li><a href="#org5249ee0">3. Задание 3.3</a></li>
+<li><a href="#org6b453a1">4. Задание 3.5</a></li>
+<li><a href="#org26004df">5. Задание 3.8</a></li>
+<li><a href="#orgd0bd011">6. Приложения</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org7a18e7f" class="outline-2">
+<h2 id="org7a18e7f"><span class="section-number-2">1</span> Задание 3.1</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Необходимо доказать, что коды Хэмминга и код Голея (23,12) с \(d = 7\)
+удовлетворяют границе хэмминга с равенством. Это несложно
+показать.
+</p>
+
+<p>
+Граница Хэмминга (в общем виде и для бинарных кодов):
+</p>
+
+\begin{align*}
+M \leq \frac{q^n}{\sum_{i=0}^{t}{{{n}\choose{i}} (q-1)^i}} = \frac{2^n}{\sum_{i=0}^{t}{{{n}\choose{i}}}}
+\end{align*}
+
+<p>
+Известно, что для кодов Хэмминга верно \(n = 2^r - 1, \ k = 2^r - r -
+  1, \ d = 3\). \(d = 2 + 1\), значит \(t = 1\). Подставим эти параметры в уравнение:
+</p>
+
+
+\begin{align*}
+M \leq \frac{2^n}{{n\choose0} + {n\choose1}}
+     = \frac{2^{2^r-1}}{{2^r-1\choose0} + {2^r-1\choose1}}
+     = \frac{2^{2^r-1}}{1 + 2^r-1}
+     = \frac{2^{2^r-1}}{2^r}
+     = 2^{2^r - r - 1}
+     = 2^k
+\end{align*}
+
+<p>
+Очевидно, что для любого линейного кода \(M = 2^k\), отсюда граница
+Хэмминга точна до равенства.
+</p>
+
+<p>
+Аналогичные рассуждения применим к коду Голея (23,12), \(t = 3\).
+</p>
+
+\begin{align*}
+M \leq \frac{2^n}{{n\choose0} + {n\choose1} + {n\choose2} + {n\choose3}}
+  = \frac{2^{23}}{{23\choose0} + {23\choose1} + {23\choose2} + {23\choose3}}
+  = \frac{2^{23}}{1 + 23 + 253 + 1771}
+  = \frac{2^{23}}{2^{11}} = 2^{12}
+\end{align*}
+
+<p>
+Видим, что мы получили \(k = 12\), как в определении кода Голея.
+</p>
+</div>
+</div>
+<div id="outline-container-org5ceb856" class="outline-2">
+<h2 id="org5ceb856"><span class="section-number-2">2</span> Задание 3.2</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Вариант 87: \(n = 25, k = 9, d = 14\).
+</p>
+
+<p>
+Зададимся \(n\) и \(d\). Оценим \(M = 2^k\) через границы Хэмминга и
+Варшамова-Гилберта (как максимальная и минимальная тривиальная
+оценки).
+</p>
+
+<p>
+Через Хэмминга:
+</p>
+
+\begin{align*}
+M \leq \frac{2^n}{\sum_{i=0}^{t}{{{n}\choose{i}}}}
+  = \frac{2^{25}}{\sum_{i=0}^{6}{{25\choose{i}}}}
+  = 136
+\end{align*}
+
+<p>
+Таким образом, \(k \leq log_2{136} = 7\).
+</p>
+
+<p>
+Граница Варшамова-Гилберта для \(q = 2\) выглядит следующим образом:
+</p>
+
+\begin{align*}
+2^{n-k} > \sum_{i=0}^{d-2}{{n-1 \choose i}}
+\end{align*}
+
+<p>
+Подставим реальные значения:
+</p>
+
+\begin{align*}
+2^{25-k} > \sum_{i=0}^{12}{{24 \choose i}} = 9740686 , \ \
+\frac{2^{25}}{9740686} > 2^k , \ \
+k < 1.76
+\end{align*}
+
+<p>
+Таким образом, граница Варшамова-Гилберта дает нижнюю оценку \(k
+  \ge 1\), то есть гарантирует существование кода с \(k = 1\) при
+заданных \(n\) и \(d\).
+</p>
+
+<p>
+Из таблицы кодов с максимальным \(d\) видно, что для \(n = 25\) и \(d =
+  14\) есть код с \(k = 3\), что удовлетворяет полученным результатам.
+</p>
+</div>
+</div>
+<div id="outline-container-org5249ee0" class="outline-2">
+<h2 id="org5249ee0"><span class="section-number-2">3</span> Задание 3.3</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Вариант 87: \(n = 25, k = 9, d = 14\).
+</p>
+
+<p>
+Будем оценивать \(d\) через \(n\) и \(k\). воспользуемся теми же
+границами, что и в прошлом задании.
+</p>
+
+<p>
+Напишем код, перебирающий \(d\) через границу Хэмминга и находящий
+максимальное \(t\), при котором условие проверки верно. Код находится
+в приложении. Полученное \(d\) (максимальное, удовлетворяющее границе
+Хэмминга) &#x2013; \(10\).
+</p>
+
+<p>
+Аналогично сделаем для границы Варшамова-Гилберта: \(d <= 7\). Таким
+образом, разумно было бы искать максимальный \(d\) в промежутке
+\([8\ldots10]\). И, действительно, лучший известный код для таких
+параметров имеет \(d = 8\).
+</p>
+</div>
+</div>
+<div id="outline-container-org6b453a1" class="outline-2">
+<h2 id="org6b453a1"><span class="section-number-2">4</span> Задание 3.5</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Пусть \(n = 2 * k\). Посмотрим на границы Хэмминга и
+Варшамова-Гилберта для этих параметров для первых значений \(k\).
+</p>
+
+<p>
+Построенный график \(d(k)\) (где \(n = 2*k\)) иллюстрирует соответствие
+лучших кодов (взятых из таблице в учебнике, конец главы 3) и двух
+границ.
+</p>
+
+
+<div class="figure">
+<p><img src="./35.png" alt="35.png" />
+</p>
+</div>
+
+
+<p>
+Видно, что с увеличением \(k\) минимальное расстояние отдаляется от
+границы Хэмминга. Поскольку вывод границы Хэмминга основана на
+задаче упаковки пространства размерности \(n\) шарами, могу
+предположить, что задача усложняется с увеличением \(n\).
+</p>
+
+<p>
+Цитируя статью с wolfram mathworld<sup><a id="fnr.1" class="footref" href="#fn.1">1</a></sup>:
+</p>
+
+<blockquote>
+<p>
+The analog of face-centered cubic packing is the densest lattice
+packing in four and five dimensions. In eight dimensions, the
+densest lattice packing is made up of two copies of face-centered
+cubic. In six and seven dimensions, the densest lattice packings are
+cross sections of the eight-dimensional case. In 24 dimensions, the
+densest packing appears to be the Leech lattice. For high dimensions
+(∼1000-D), the densest known packings are nonlattice.
+</p>
+</blockquote>
+
+<p>
+И действительно, для пространства 24 существует выделенный хороший
+код Голея<sup><a id="fnr.2" class="footref" href="#fn.2">2</a></sup>. То есть можно полагать, что сложность достижения
+\(d\) сводится к сложности решения задачи об n-мерной упаковке сфер.
+</p>
+</div>
+</div>
+<div id="outline-container-org26004df" class="outline-2">
+<h2 id="org26004df"><span class="section-number-2">5</span> Задание 3.8</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Реализация метода в приложении. Примеры запуска на разных данных
+(код генерирует матрицу \(H\)):
+</p>
+
+<p>
+Код (8,1) с \(d = 8\) по границе Варшамова-Гилберта:
+</p>
+<div class="org-src-container">
+<pre class="src src-haskell">&#955;<span style="color: #8AAFFA;">&gt;</span><span style="color: #333333;"> </span>distance<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>buildGilbertVarshamovH<span style="color: #333333;"> </span>8<span style="color: #333333;"> </span>1
+8
+&#955;<span style="color: #8AAFFA;">&gt;</span><span style="color: #333333;"> </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>buildGilbertVarshamovH<span style="color: #333333;"> </span>8<span style="color: #333333;"> </span>1
+10000001
+11000000
+10100000
+10010000
+10001000
+10000100
+10000010
+</pre>
+</div>
+
+<p>
+Код (8,3) с \(d = 3\).
+</p>
+<div class="org-src-container">
+<pre class="src src-haskell">&#955;<span style="color: #8AAFFA;">&gt;</span><span style="color: #333333;"> </span>distance<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>buildGilbertVarshamovH<span style="color: #333333;"> </span>8<span style="color: #333333;"> </span>3
+3
+&#955;<span style="color: #8AAFFA;">&gt;</span><span style="color: #333333;"> </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showM<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>buildGilbertVarshamovH<span style="color: #333333;"> </span>8<span style="color: #333333;"> </span>3
+00000001
+11100000
+10011000
+01010100
+11010010
+</pre>
+</div>
+
+<p>
+Алгоритм работает таким образом. На каждом шаге мы имеем \(s < n\) уже
+построенных столбцов \(x\) будущей матрицы \(H\). Мы пытаемся найти
+такой \(v\), что любые \(d-1\) комбинаций векторов \(d:x\) линейно
+независимы. \(v\) мы выбираем, перебирая по всем столбцам высоты
+\(r\). Оценим стоимость одного перебора &#x2013; проверки на лнз,
+проделанной для каждого \(v\). Мы имеем, грубо говоря, \(d\) столбцов
+которые необходимо проверить на лнз. Мы смотрим на все бинарные
+комбинации этих столбцов (которых \(2^d\)) и для каждого выполняем
+сумму и проверку на ноль. Сумма выбранных \(q < d\) векторов стоит
+\(q*k\) операций сложения. Итого имеем \(d*r*2^d\). \(d < n\), поэтому
+можем оценить одну проверку на ЛНЗ в \(n*r*2^n\). Также каждая
+проверка совершается для \(v\), всего \(v\), как уже было замечено,
+\(2^r\). Всего мы проделываем это для каждого столбца, поэтому
+домножаем на \(n\). Итоговая оценка алгоритма \(O(n r 2^n 2^r * n) =
+  O(n^2 r 2^{rn})\).
+</p>
+
+<p>
+Перейдем к практическим результатам. Исходя из оценки, я перебирал
+\(n\) при \(k = 3\) (так асимптотика максимальна, потому что \(r\)
+больше). Моя программа на (18,3) (\(d = 8\)) выдает решение за 22
+секунды, на (19,3) \(d = 9\) работает больше двух. Если же \(k\) высоко,
+то алгоритм работает быстро для больших \(n\) (например, для (30,20)
+почти мгновенно).
+</p>
+</div>
+</div>
+<div id="outline-container-orgd0bd011" class="outline-2">
+<h2 id="orgd0bd011"><span class="section-number-2">6</span> Приложения</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+К заданию 3.3 (поиск \(d\) через \(n\) и \(k\) по границам Хэмминга и Варшамова-Гилберта):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #8AAFFA;">findDRange</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">Integer</span>,<span style="color: #EF5C5F;">Integer</span>)
+<span style="color: #8AAFFA;">findDRange</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>k<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>(lastB<span style="color: #333333;"> </span>hammingCond<span style="color: #333333;"> </span>[1<span style="color: #A197BF;">..</span>n],<span style="color: #333333;"> </span>lastB<span style="color: #333333;"> </span>gilbertVarshamovCond<span style="color: #333333;"> </span>[1<span style="color: #A197BF;">..</span>n])
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>lastB<span style="color: #333333;"> </span>cond<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>unsafeLast<span style="color: #333333;"> </span><span style="color: #A197BF;">.</span><span style="color: #333333;"> </span>takeWhile<span style="color: #333333;"> </span>cond
+<span style="color: #333333;">    </span>cast<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">Integral</span><span style="color: #333333;"> </span>a,<span style="color: #333333;"> </span><span style="color: #EF5C5F;">Num</span><span style="color: #333333;"> </span>b)<span style="color: #333333;"> </span><span style="color: #A197BF;">=&gt;</span><span style="color: #333333;"> </span>a<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>b
+<span style="color: #333333;">    </span>cast<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>fromIntegral
+<span style="color: #333333;">    </span>hammingCond<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Bool</span>
+<span style="color: #333333;">    </span>hammingCond<span style="color: #333333;"> </span>d<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
+<span style="color: #333333;">        </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>t<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>(d<span style="color: #333333;"> </span><span style="color: #A197BF;">-</span><span style="color: #333333;"> </span>1)<span style="color: #333333;"> </span><span style="color: #A197BF;">`div`</span><span style="color: #333333;"> </span>2
+<span style="color: #333333;">        </span><span style="color: #FFA070;">in</span><span style="color: #333333;"> </span>(2.0<span style="color: #A197BF;">^</span>k<span style="color: #A197BF;">::</span><span style="color: #EF5C5F;">Double</span>)<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;=</span><span style="color: #333333;"> </span>((2.0<span style="color: #A197BF;">^</span>n)<span style="color: #333333;"> </span><span style="color: #A197BF;">/</span><span style="color: #333333;"> </span>(cast<span style="color: #333333;"> </span>(sum<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(combinationsN<span style="color: #333333;"> </span>n)<span style="color: #333333;"> </span>[0<span style="color: #A197BF;">..</span>t])<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Double</span>))
+<span style="color: #333333;">    </span>gilbertVarshamovCond<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Bool</span>
+<span style="color: #333333;">    </span>gilbertVarshamovCond<span style="color: #333333;"> </span>d<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>2<span style="color: #A197BF;">^</span>(n<span style="color: #A197BF;">-</span>k)<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>(sum<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(combinationsN<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">-</span>1)<span style="color: #333333;"> </span>[0<span style="color: #A197BF;">..</span>(d<span style="color: #A197BF;">-</span>2)])
+</pre>
+</div>
+
+<p>
+К заданию 3.8:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #8AAFFA;">buildGilbertVarshamovH</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]
+<span style="color: #8AAFFA;">buildGilbertVarshamovH</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>k<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>genVectors<span style="color: #333333;"> </span>(n<span style="color: #A197BF;">-</span>1)<span style="color: #333333;"> </span>[initVec]
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>genVectors<span style="color: #333333;"> </span>0<span style="color: #333333;"> </span>acc<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>acc
+<span style="color: #333333;">    </span>genVectors<span style="color: #333333;"> </span>l<span style="color: #333333;"> </span>acc<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
+<span style="color: #333333;">        </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>a<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>fromMaybe<span style="color: #333333;"> </span>(error<span style="color: #333333;"> </span><span style="color: #868B44;">"couldn't</span><span style="color: #333333;"> </span><span style="color: #868B44;">find</span><span style="color: #333333;"> </span><span style="color: #868B44;">one"</span>)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
+<span style="color: #333333;">                </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>x<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>not<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>linearDependentSubset<span style="color: #333333;"> </span>(d<span style="color: #A197BF;">-</span>1)<span style="color: #333333;"> </span>(x<span style="color: #EF5C5F;">:</span>acc))<span style="color: #333333;"> </span>(binaryVectors<span style="color: #333333;"> </span>r)
+<span style="color: #333333;">        </span><span style="color: #FFA070;">in</span><span style="color: #333333;"> </span>genVectors<span style="color: #333333;"> </span>(l<span style="color: #A197BF;">-</span>1)<span style="color: #333333;"> </span>(a<span style="color: #EF5C5F;">:</span>acc)
+
+<span style="color: #333333;">    </span>d<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>snd<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>findDRange<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>k
+<span style="color: #333333;">    </span>r<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">-</span><span style="color: #333333;"> </span>k
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">Vector</span><span style="color: #333333;"> </span><span style="color: #637579;">00..01</span><span style="color: #333333;"> </span><span style="color: #637579;">of</span><span style="color: #333333;"> </span><span style="color: #637579;">length</span><span style="color: #333333;"> </span><span style="color: #637579;">r</span>
+<span style="color: #333333;">    </span>initVec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">True</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>replicate<span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>r<span style="color: #A197BF;">-</span>1)<span style="color: #333333;"> </span><span style="color: #EF5C5F;">False</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<h2 class="footnotes">Footnotes: </h2>
+<div id="text-footnotes">
+
+<div class="footdef"><sup><a id="fn.1" class="footnum" href="#fnr.1">1</a></sup> <div class="footpara"><p class="footpara">
+<a href="http://mathworld.wolfram.com/HyperspherePacking.html">http://mathworld.wolfram.com/HyperspherePacking.html</a>
+</p></div></div>
+
+<div class="footdef"><sup><a id="fn.2" class="footnum" href="#fnr.2">2</a></sup> <div class="footpara"><p class="footpara">
+<a href="https://en.wikipedia.org/wiki/Sphere_packing#Other_spaces">https://en.wikipedia.org/wiki/Sphere_packing#Other_spaces</a>
+</p></div></div>
+
+
+</div>
+</div></div>
+<div id="postamble" class="status">
+<p class="author">Author: Волхов Михаил, M4139</p>
+<p class="date">Created: 2017-11-28 Tue 13:39</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

@@ -22,6 +22,7 @@ executable info-theory-bin
   build-depends:       base
                      , containers >= 0.5.7.1
                      , lens
+                     , easyplot
                      , permutation
                      , universum
                      , unordered-containers >= 0.2.8.0
