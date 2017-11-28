@@ -18,7 +18,7 @@ cabal-version:       >=1.10
 executable info-theory-bin
   hs-source-dirs:      .
   main-is:             Main.hs
-  other-modules:       Part2
+  other-modules:       Lib
   build-depends:       base
                      , containers >= 0.5.7.1
                      , lens

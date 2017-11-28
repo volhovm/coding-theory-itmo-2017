@@ -6,7 +6,7 @@
 
 -- | Solutions for part 2
 
-module Part2
+module Lib
     ( task7
     , task6
     , task215

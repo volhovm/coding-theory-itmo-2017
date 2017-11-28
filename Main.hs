@@ -4,7 +4,7 @@ module Main where
 
 import Universum
 
-import Part2
+import Lib
 
 main :: IO ()
 main = do
