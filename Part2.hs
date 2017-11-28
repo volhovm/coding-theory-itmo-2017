@@ -1,5 +1,9 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE TypeApplications  #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
+
 -- | Solutions for part 2
 
 module Part2
@@ -9,12 +13,12 @@ module Part2
     , task216
     ) where
 
-import           Control.Lens    (at, ix, (?=))
-import qualified Data.HashSet    as HS
-import           Data.List       (delete, (!!), (\\))
-import           Data.Map.Strict ((!))
-import           Universum       hiding (transpose)
-import           Unsafe          (unsafeHead)
+import Control.Lens (at, ix, (?=))
+import qualified Data.HashSet as HS
+import Data.List ((!!))
+import Data.Map.Strict ((!))
+import Universum hiding (transpose)
+import Unsafe (unsafeHead)
 
 -- Vertical vector
 type BVector = [Bool]
@@ -156,7 +160,7 @@ task7 = syndromDecodeBuild h
 task6 :: Map BVector BVector
 task6 = syndromDecodeBuild h
   where
-    h = drop 1 $ binaryVectors 3
+    h = drop 1 $ binaryVectors (3::Int)
 
 -- | Returns complete list of code vectors by H.
 codeH :: [BVector] -> [BVector]
@@ -274,9 +278,9 @@ findGfromH h =
     r = length $ unsafeHead h
     k = n - r
 
-hamming74H = drop 1 $ binaryVectors 3
+hamming74H = drop 1 $ binaryVectors (3 :: Int)
 hamming74G = findGfromH hamming74H
-hammingE84H = map (++ [True]) $ binaryVectors 3
+hammingE84H = map (++ [True]) $ binaryVectors (3 :: Int)
 hammingE84G = findGfromH hammingE84H
 
 task216 :: IO ()
@@ -286,9 +290,9 @@ task216 = do
     putText "---"
     putStrLn $ showM hamming74G
     print $ rankk 4 hamming74G
-    print $ length $ combinations 4 [1..7]
+    print $ length $ combinations 4 [1..(7::Int)]
     putStrLn $ showM hammingE84H
     putText "---"
     putStrLn $ showM hammingE84G
     print $ rankk 4 hammingE84G
-    print $ length $ combinations 4 [1..8]
+    print $ length $ combinations 4 [1..(8::Int)]
