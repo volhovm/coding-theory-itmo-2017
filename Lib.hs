@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
 
--- | Solutions for part 2
+-- | Coding theory solutions.
 
 module Lib
     ( task7
@@ -21,17 +21,19 @@ import Control.Lens (at, ix, (?=))
 import qualified Data.HashSet as HS
 import Data.List ((!!))
 import Data.Map.Strict ((!))
+import qualified Data.Map.Strict as M
 import Graphics.EasyPlot
 import Universum hiding (transpose)
 import Unsafe (unsafeHead, unsafeLast)
 
 -- Vertical vector
 type BVector = [Bool]
+type BMatrix = [BVector]
 
 showVec :: BVector -> String
 showVec = map $ bool '0' '1'
 
-showM :: [BVector] -> String
+showM :: BMatrix -> String
 showM = intercalate "\n" . map showVec . transpose
 
 -- | Produces a list of binary vectors of length n.
@@ -76,11 +78,12 @@ combinationsN n k = (fact n) `div` (fact k) `div` (fact $ n - k)
   where
     fact (x :: Integer) = product [1..x]
 
-log2 :: Floating a => a -> a
-log2 x = log x / log 2
 
 allCombinations :: [a] -> [[a]]
 allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs)]
+
+log2 :: Floating a => a -> a
+log2 x = log x / log 2
 
 -- | Checks if any combination of weight <= d are linear dependent.
 linearDependentSubset :: Integer -> [BVector] -> Bool
@@ -183,6 +186,12 @@ codeH h = filter (\y -> y `vMulM` (transpose h) == replicate r False)
     n = length h
     r = length (unsafeHead h)
 
+-- | Get all code words from G.
+codeG :: [BVector] -> [BVector]
+codeG g = map (`vMulM` g) $ binaryVectors k
+  where
+    k = length (unsafeHead g)
+
 -- | Given matrix H, returns (r,v1,v2) -- code radius r, vector v1
 -- (not in code).
 codeRadius :: [BVector] -> (Integer, BVector)
@@ -278,13 +287,17 @@ task215 =
         print $ map showVec $ buildZeroNN h
         putText "---------------------"
 
+-- | Checks if g and h are compatible.
+checkGH :: BMatrix -> BMatrix -> Bool
+checkGH g h = isNullM $ g `mMulM` transpose h
+
+-- | Finds g given h.
 findGfromH :: [BVector] -> [BVector]
 findGfromH h =
     fromMaybe (error "can't happen2") $
-    find (\g -> formsBasis g && givesNull g) allPossibleG
+    find (\g -> formsBasis g && checkGH g h) allPossibleG
   where
     formsBasis g = not $ linearDependent $ transpose g
-    givesNull g = isNullM $ g `mMulM` transpose h
 
     allPossibleG = combinations (fromIntegral n) $ binaryVectors k
     n = length h
@@ -309,6 +322,10 @@ task216 = do
     putStrLn $ showM hammingE84G
     print $ rankk 4 hammingE84G
     print $ combinationsN 8 4
+
+----------------------------------------------------------------------------
+-- Part 3
+----------------------------------------------------------------------------
 
 findDRange :: Integer -> Integer -> (Integer,Integer)
 findDRange n k = (lastB hammingCond [1..n], lastB gilbertVarshamovCond [1..n])
@@ -349,3 +366,80 @@ illustrateGVH = do
         ]
   where
     realData = [(4,4),(5,4),(6,4),(7,4),(8,5),(9,6),(10,6),(11,7),(12,8), (13,7),(14,8),(15,8),(16,8),(17,8),(18,8),(19,9),(20,10)]
+
+----------------------------------------------------------------------------
+-- Part 4
+----------------------------------------------------------------------------
+
+-- | Channel is function from (c,y) to probability p.
+type Channel = Bool -> Double -> Double
+
+-- | Discrete stationary channel.
+dsc :: Double -> Channel
+dsc ε = curry $ \case
+    (False, 0) -> 1 - ε
+    (True,  1) -> 1 - ε
+    (False, 1) -> ε
+    (True,  0) -> ε
+    _          -> error "dsc is invalid"
+
+-- | Additive white gaussian noise.
+awgn :: Double -> Double -> Channel
+awgn n0 e =
+    \c y ->
+      let sgn = bool (+) (-) c
+      in exp (- (y `sgn` sqrt e)/n0)/(sqrt $ pi * n0)
+
+-- | Maximum likelihood decoder.
+decodeML :: Channel -> [BVector] -> [Double] -> BVector
+decodeML chan codeWords y =
+    fst $ maximumBy (comparing snd) $
+    map (\c -> (c,aPrioriProb c)) codeWords
+  where
+    aPrioriProb c = product $ map (uncurry chan) $ c `zip` y
+
+-- | Maximum a posterior probability decoder.
+decodeMaxAp :: Channel -> [BVector] -> [Double] -> BVector
+decodeMaxAp chan codeWords y =
+    fst $ maximumBy (comparing snd) pcy
+  where
+    -- p(c|y)
+    pcy = map (\c -> (c,pycMap M.! c * pc / py)) codeWords
+
+    -- map c -> p(y|c)
+    computePyc :: BVector -> Double
+    computePyc c = product $ map (uncurry chan) $ c `zip` y
+    pycMap = M.fromList $ map (\c -> (c,computePyc c)) codeWords
+
+    -- p(y)
+    py = sum $ map (\c -> pycMap M.! c * pc) codeWords
+
+    -- p(c)
+    pc = 1/(fromIntegral $ length codeWords)
+
+task42 :: IO ()
+task42 = do
+    print $ decodeMaxAp
+        (dsc 0.1)
+        (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
+        [0,0,1,0,1]
+    print $ decodeML
+        (dsc 0.1)
+        (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
+        [0,0,1,0,1]
+
+-- | Chapter 2 task 3 - individual task matrix G.
+g23 :: BMatrix
+g23 =
+    map fromIntVector $
+    [ [1, 0, 0, 0, 0, 0]
+    , [0, 1, 0, 0, 0, 0]
+    , [0, 0, 1, 0, 0, 0]
+    , [0, 0, 0, 1, 0, 0]
+    , [0, 0, 0, 0, 1, 0]
+    , [0, 0, 0, 0, 0, 1]
+    , [1, 1, 1, 0, 1, 1]
+    , [1, 1, 0, 1, 1, 0]
+    , [1, 1, 0, 1, 0, 1]
+    , [0, 1, 1, 1, 1, 0]
+    ]
