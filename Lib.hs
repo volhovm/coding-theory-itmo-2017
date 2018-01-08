@@ -7,8 +7,8 @@
 -- | Coding theory solutions.
 
 module Lib
-    ( task7
-    , task6
+    ( task27
+    , task26
     , task215
     , task216
     , findDRange
@@ -19,18 +19,35 @@ module Lib
     ) where
 
 
+import           Nub                      (ordNub)
 import           Universum                hiding (transpose)
 import           Unsafe                   (unsafeHead, unsafeLast)
 
 import           Control.Concurrent.Async
 import           Control.Lens             (at, ix, (?=))
 import qualified Data.HashSet             as HS
-import           Data.List                ((!!))
+import           Data.List                (findIndex, (!!))
 import           Data.Map.Strict          ((!))
 import qualified Data.Map.Strict          as M
 import           Graphics.EasyPlot
 import           System.IO.Unsafe         (unsafePerformIO)
 import           System.Random
+
+
+----------------------------------------------------------------------------
+-- Utilities
+----------------------------------------------------------------------------
+
+randomGaussian :: (Floating a, Random a) => a -> a -> IO a
+randomGaussian mean sigma = do
+    [u1,u2] <- replicateM 2 $ randomRIO (0,1)
+    let r = sqrt (-2 * log u1)
+    let t = 2 * pi * u2
+    let x = r * cos t
+    pure $ x * sigma + mean
+
+randomNormal :: (Floating a, Random a) => IO a
+randomNormal = randomGaussian 0 1
 
 -- Vertical vector
 type BVector = [Bool]
@@ -91,6 +108,34 @@ allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs
 log2 :: Floating a => a -> a
 log2 x = log x / log 2
 
+weight :: BVector -> Integer
+weight = sum . map (bool 0 1)
+
+scalar :: BVector -> BVector -> Bool
+scalar a b =
+    case weight (a `mulBVectors` b) `mod` 2 of
+       1 -> True
+       _ -> False
+
+transpose :: [[a]] -> [[a]]
+transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
+  where
+    n = length (unsafeHead m1)
+
+vMulM :: BVector -> BMatrix -> BVector
+vMulM v m = map (scalar v) m
+
+mMulM :: BMatrix -> BMatrix -> BMatrix
+mMulM a b = transpose $ map (`vMulM` b) $ transpose a
+
+isNullM :: BMatrix -> Bool
+isNullM = all (all (== False))
+
+----------------------------------------------------------------------------
+-- Part 2
+----------------------------------------------------------------------------
+
+
 -- | Checks if any combination of weight <= d are linear dependent.
 linearDependentSubset :: Integer -> [BVector] -> Bool
 linearDependentSubset _ [] = False
@@ -122,35 +167,6 @@ distance matrix =
     maxRank :: Integer
     maxRank = toInteger $ min n k
 
-weight :: BVector -> Integer
-weight = sum . map (bool 0 1)
-
-scalar :: BVector -> BVector -> Bool
-scalar a b =
-    case weight (a `mulBVectors` b) `mod` 2 of
-       1 -> True
-       _ -> False
-
-transpose :: [[a]] -> [[a]]
-transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
-  where
-    n = length (unsafeHead m1)
-
-vMulM :: BVector -> BMatrix -> BVector
-vMulM v m = map (scalar v) m
-
-mMulM :: BMatrix -> BMatrix -> BMatrix
-mMulM a b = transpose $ map (`vMulM` b) $ transpose a
-
-isNullM :: BMatrix -> Bool
-isNullM = all (all (== False))
-
-testmmulm :: IO ()
-testmmulm = do
-    let g = map fromIntVector [[1,0],[0,1],[1,1]]
-    let h = map fromIntVector [[1],[1],[1]]
-    print $ map showVec $ g `mMulM` (transpose h)
-
 encodeG :: BMatrix -> BVector -> BVector
 encodeG g x = x `vMulM` g
 
@@ -166,24 +182,11 @@ syndromDecodeBuild h = flip execState mempty $ forM_ allEs $ \e -> do
     allEs :: [BVector]
     allEs = binaryVectors n
 
-task7 :: Map BVector BVector
-task7 = syndromDecodeBuild h
-  where
-    h = map fromIntVector $
-        [ [1,1,1,0]
-        , [1,1,1,1]
-        , [1,0,0,1]
-        , [0,1,1,1]
-        , [1,1,0,1]
-        , [1,0,1,0]
-        , [1,0,0,0]
-        , [1,1,1,1]
-        , [0,1,0,1]
-        , [0,0,1,1] ]
+task27 :: Map BVector BVector
+task27 = syndromDecodeBuild h23
 
-
-task6 :: Map BVector BVector
-task6 = syndromDecodeBuild h
+task26 :: Map BVector BVector
+task26 = syndromDecodeBuild h
   where
     h = drop 1 $ binaryVectors (3::Int)
 
@@ -332,6 +335,58 @@ task216 = do
     print $ rankk 4 hammingE84G
     print $ combinationsN 8 4
 
+-- | Chapter 2 task 3 - individual task matrix G.
+g23 :: BMatrix
+g23 =
+    map fromIntVector $
+    [ [1, 0, 0, 0, 0, 0]
+    , [0, 1, 0, 0, 0, 0]
+    , [0, 0, 1, 0, 0, 0]
+    , [0, 0, 0, 1, 0, 0]
+    , [0, 0, 0, 0, 1, 0]
+    , [0, 0, 0, 0, 0, 1]
+    , [1, 1, 1, 0, 1, 1]
+    , [1, 1, 0, 1, 1, 0]
+    , [1, 1, 0, 1, 0, 1]
+    , [0, 1, 1, 1, 1, 0]
+    ]
+
+-- | Dual H matrix.
+h23 :: BMatrix
+h23 =
+    map fromIntVector $
+    [ [1, 1, 1, 0]
+    , [1, 1, 1, 1]
+    , [1, 0, 0, 1]
+    , [0, 1, 1, 1]
+    , [1, 1, 0, 1]
+    , [1, 0, 1, 0]
+    , [1, 0, 0, 0]
+    , [0, 1, 0, 0]
+    , [0, 0, 1, 0]
+    , [0, 0, 0, 1]
+    ]
+
+g23Dimq :: BMatrix
+g23Dimq =
+    map fromIntVector $ transpose
+    [ [1, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    , [0, 1, 0, 0, 0, 0, 1, 1, 1, 0]
+    , [0, 0, 1, 0, 0, 0, 0, 1, 0, 1]
+    , [0, 0, 0, 1, 0, 0, 0, 1, 1, 0]
+    , [0, 0, 0, 0, 1, 0, 1, 1, 0, 0]
+    , [0, 0, 0, 0, 0, 1, 1, 0, 1, 0]
+    ]
+
+h23Dimq :: BMatrix
+h23Dimq =
+    map fromIntVector $ transpose
+    [ [1, 1, 0, 0, 1, 1, 1, 0, 0, 0]
+    , [1, 1, 1, 1, 1, 0, 0, 1, 0, 0]
+    , [1, 1, 0, 1, 0, 1, 0, 0, 1, 0]
+    , [1, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+    ]
+
 ----------------------------------------------------------------------------
 -- Part 3
 ----------------------------------------------------------------------------
@@ -413,17 +468,6 @@ awgn n0 e =
     gaussian :: Double -> Double -> Double -> Double
     gaussian μ σ2 x = exp (- ((x - μ)**2)/(2*σ2)) / (sqrt (2 * pi * σ2))
 
-randomGaussian :: (Floating a, Random a) => a -> a -> IO a
-randomGaussian mean sigma = do
-    [u1,u2] <- replicateM 2 $ randomRIO (0,1)
-    let r = sqrt (-2 * log u1)
-    let t = 2 * pi * u2
-    let x = r * cos t
-    pure $ x * sigma + mean
-
-randomNormal :: (Floating a, Random a) => IO a
-randomNormal = randomGaussian 0 1
-
 awgnEncode :: Double -> Double -> Bool -> IO Double
 awgnEncode n0 e v0 = do
     let se = sqrt e
@@ -457,17 +501,6 @@ decodeMaxAp chan codeWords y =
     -- p(c)
     pc = 1/(fromIntegral $ length codeWords)
 
-someTestFoo :: IO ()
-someTestFoo = do
-    print $ decodeMaxAp
-        (dsc 0.1)
-        (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
-        [0,0,1,0,1]
-    print $ decodeML
-        (dsc 0.1)
-        (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
-        [0,0,1,0,1]
-
 erf :: Double -> Double
 erf x = sign*y
   where
@@ -485,9 +518,10 @@ erf x = sign*y
     t  =  1.0/(1.0 + p* abs x)
     y  =  1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*exp(-x*x)
 
-
-qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
-calcp en0 = qfunc (sqrt (2 * en0))
+calcp :: Double -> Double
+calcp en0 =
+    let qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
+    in qfunc (sqrt (2 * en0))
 
 task42 :: Integer -> IO ()
 task42 i = do
@@ -535,50 +569,68 @@ task42 i = do
     print datasets
     void $ plot (SVG "task42PlotDimqTemp.svg") $ map f2d datasets
 
-fromDoubles :: [Double] -> BVector
-fromDoubles = map go
+
+type Lattice v e = [[(v, Map Int e)]]
+type CodeLattice = Lattice () Bool
+type SyndromLattice = Lattice BVector Bool
+
+
+showSyndromeLattice :: SyndromLattice -> Text
+showSyndromeLattice x = unlines $ map (show . map (\(v,m) -> (showVec v,M.toList m))) x
+
+buildSyndromLattice :: BMatrix -> SyndromLattice
+buildSyndromLattice h =
+    pruneForks $ rawLattice 0 [[(zSyndrome, mempty)]]
+    --reverse $ rawLattice 0 [[(zSyndrome, mempty)]]
   where
-    go 1 = True
-    go 0 = False
-    go e = error $ "fromDoubles: " <> show e
+    n = length h
+    r = length $ unsafeHead h
+    zSyndrome = replicate r False
 
+    -- From two lists, creates function a -> i which tells that element a
+    -- now has index i, or it was removed if key not present.
+    createMods :: (Ord a) => [a] -> [a] -> Map Int Int
+    createMods before after =
+        M.fromList $
+        mapMaybe (\(b,i) -> (i,) <$> findIndex (== b) after) (before`zip`[0..])
 
-toDoubles :: BVector -> [Double]
-toDoubles = map foo
-  where foo False = 0
-        foo True  = 1
+    -- Work on reversed lattice
+    deleteFork (top:xs) mods =
+        let fixEdge :: (Int,Bool) -> Maybe (Int,Bool)
+            fixEdge (i,b) = (,b) <$> M.lookup i mods
+            edgesFixed = map (\(e,v) -> (e,M.fromList $ mapMaybe fixEdge $ M.toList v)) top
+            newTop = filter (not . M.null . snd) edgesFixed
+            newMods = createMods (map fst top) (map fst newTop)
+        in newTop:(deleteFork xs newMods)
+    deleteFork _ _ = []
 
+    pruneForks :: SyndromLattice -> SyndromLattice
+    pruneForks (top:xs) =
+        let newTop = [(zSyndrome, mempty)]
+            mods = createMods (map fst top) [zSyndrome]
+        in reverse $ newTop:(deleteFork xs mods)
+    pruneForks _ = error "pruneForks"
 
---wtf :: IO ()
---wtf = do
---    let x = encodeG g23 $ fromIntVector [1,1,1,1,1,1]
---    let y = decodeML (dsc 0.1) (codeG g23) $ toDoubles x
---    print x
---    print y
+    -- Returns reversed lattice
+    rawLattice :: Int -> SyndromLattice -> SyndromLattice
+    rawLattice step acc | step >= n = acc
+    rawLattice step (top:t) = do
+        let buildNext syndrom0 b = syndrom0 `sumBVectors` (map (&& b) (h !! step))
+        let processed = map (\(v,_) -> let s1 = buildNext v True
+                                           s2 = buildNext v False
+                                       in ((v,[(True,s1),(False,s2)]),[s1,s2])) top
+        let allNewStates = sort $ ordNub $ concatMap snd processed
+        let resolveRefs :: [(Bool,BVector)] -> Map Int Bool
+            resolveRefs =
+                M.fromList .
+                map (\(b,sref) -> (fromMaybe (error "a") $ findIndex (==sref) allNewStates,b))
+        let newTop = map (second resolveRefs . fst) processed
+        let newLayer = map (,mempty) allNewStates
+        rawLattice (step + 1) (newLayer:newTop:t)
+    rawLattice _ _ = error "rawLattice"
 
--- | Chapter 2 task 3 - individual task matrix G.
-g23 :: BMatrix
-g23 =
-    map fromIntVector $
-    [ [1, 0, 0, 0, 0, 0]
-    , [0, 1, 0, 0, 0, 0]
-    , [0, 0, 1, 0, 0, 0]
-    , [0, 0, 0, 1, 0, 0]
-    , [0, 0, 0, 0, 1, 0]
-    , [0, 0, 0, 0, 0, 1]
-    , [1, 1, 1, 0, 1, 1]
-    , [1, 1, 0, 1, 1, 0]
-    , [1, 1, 0, 1, 0, 1]
-    , [0, 1, 1, 1, 1, 0]
-    ]
-
-g23Dimq :: BMatrix
-g23Dimq =
-    map fromIntVector $
-    [ [1, 0, 0, 0, 0, 0, 1, 1, 1, 1]
-    , [0, 1, 0, 0, 0, 0, 1, 1, 1, 0]
-    , [0, 0, 1, 0, 0, 0, 0, 1, 0, 1]
-    , [0, 0, 0, 1, 0, 0, 0, 1, 1, 0]
-    , [0, 0, 0, 0, 1, 0, 1, 1, 0, 0]
-    , [0, 0, 0, 0, 0, 1, 1, 0, 1, 0]
-    ]
+task44 :: IO ()
+task44 = do
+    -- test from textbook
+    -- putText $ showSyndromeLattice $ buildSyndromLattice $ map fromIntVector $ [[1,0,0],[1,0,1],[0,1,0],[0,0,1],[1,1,0],[1,1,1]]
+    putText $ showSyndromeLattice $ buildSyndromLattice $ h23
