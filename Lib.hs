@@ -15,16 +15,22 @@ module Lib
     , buildGilbertVarshamovH
     , distance
     , showM
+    , task42
     ) where
 
-import Control.Lens (at, ix, (?=))
-import qualified Data.HashSet as HS
-import Data.List ((!!))
-import Data.Map.Strict ((!))
-import qualified Data.Map.Strict as M
-import Graphics.EasyPlot
-import Universum hiding (transpose)
-import Unsafe (unsafeHead, unsafeLast)
+
+import           Universum                hiding (transpose)
+import           Unsafe                   (unsafeHead, unsafeLast)
+
+import           Control.Concurrent.Async
+import           Control.Lens             (at, ix, (?=))
+import qualified Data.HashSet             as HS
+import           Data.List                ((!!))
+import           Data.Map.Strict          ((!))
+import qualified Data.Map.Strict          as M
+import           Graphics.EasyPlot
+import           System.IO.Unsafe         (unsafePerformIO)
+import           System.Random
 
 -- Vertical vector
 type BVector = [Bool]
@@ -130,13 +136,13 @@ transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
   where
     n = length (unsafeHead m1)
 
-vMulM :: BVector -> [BVector] -> BVector
+vMulM :: BVector -> BMatrix -> BVector
 vMulM v m = map (scalar v) m
 
-mMulM :: [BVector] -> [BVector] -> [BVector]
+mMulM :: BMatrix -> BMatrix -> BMatrix
 mMulM a b = transpose $ map (`vMulM` b) $ transpose a
 
-isNullM :: [BVector] -> Bool
+isNullM :: BMatrix -> Bool
 isNullM = all (all (== False))
 
 testmmulm :: IO ()
@@ -144,6 +150,9 @@ testmmulm = do
     let g = map fromIntVector [[1,0],[0,1],[1,1]]
     let h = map fromIntVector [[1],[1],[1]]
     print $ map showVec $ g `mMulM` (transpose h)
+
+encodeG :: BMatrix -> BVector -> BVector
+encodeG g x = x `vMulM` g
 
 syndromDecodeBuild :: [BVector] -> Map BVector BVector
 syndromDecodeBuild h = flip execState mempty $ forM_ allEs $ \e -> do
@@ -374,6 +383,9 @@ illustrateGVH = do
 -- | Channel is function from (c,y) to probability p.
 type Channel = Bool -> Double -> Double
 
+type Encoder = Bool -> IO Double
+type Decoder = [Double] -> BVector
+
 -- | Discrete stationary channel.
 dsc :: Double -> Channel
 dsc ε = curry $ \case
@@ -383,12 +395,40 @@ dsc ε = curry $ \case
     (True,  0) -> ε
     _          -> error "dsc is invalid"
 
+dscEncode :: Double -> Bool -> IO Double
+dscEncode ε b = do
+    r <- randomRIO (0,1)
+    pure $ case bool b (not b) $ r < ε of
+      False -> 0
+      True  -> 1
+
 -- | Additive white gaussian noise.
 awgn :: Double -> Double -> Channel
 awgn n0 e =
     \c y ->
-      let sgn = bool (+) (-) c
-      in exp (- (y `sgn` sqrt e)/n0)/(sqrt $ pi * n0)
+      let μ = (bool (-) (+) c) 0 (sqrt e)
+          σ2 = n0 / 2
+      in gaussian μ σ2 y
+  where
+    gaussian :: Double -> Double -> Double -> Double
+    gaussian μ σ2 x = exp (- ((x - μ)**2)/(2*σ2)) / (sqrt (2 * pi * σ2))
+
+randomGaussian :: (Floating a, Random a) => a -> a -> IO a
+randomGaussian mean sigma = do
+    [u1,u2] <- replicateM 2 $ randomRIO (0,1)
+    let r = sqrt (-2 * log u1)
+    let t = 2 * pi * u2
+    let x = r * cos t
+    pure $ x * sigma + mean
+
+randomNormal :: (Floating a, Random a) => IO a
+randomNormal = randomGaussian 0 1
+
+awgnEncode :: Double -> Double -> Bool -> IO Double
+awgnEncode n0 e v0 = do
+    let se = sqrt e
+    let v = bool (-se) se v0
+    randomGaussian v (n0/2)
 
 -- | Maximum likelihood decoder.
 decodeML :: Channel -> [BVector] -> [Double] -> BVector
@@ -417,8 +457,8 @@ decodeMaxAp chan codeWords y =
     -- p(c)
     pc = 1/(fromIntegral $ length codeWords)
 
-task42 :: IO ()
-task42 = do
+someTestFoo :: IO ()
+someTestFoo = do
     print $ decodeMaxAp
         (dsc 0.1)
         (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
@@ -427,6 +467,96 @@ task42 = do
         (dsc 0.1)
         (codeG $ (map fromIntVector) [[1,0],[1,1],[1,0],[0,1],[0,1]])
         [0,0,1,0,1]
+
+erf :: Double -> Double
+erf x = sign*y
+  where
+    a1 =  0.254829592
+    a2 = -0.284496736
+    a3 =  1.421413741
+    a4 = -1.453152027
+    a5 =  1.061405429
+    p  =  0.3275911
+
+    -- Abramowitz and Stegun formula 7.1.26
+    sign = if x > 0
+               then  1
+               else -1
+    t  =  1.0/(1.0 + p* abs x)
+    y  =  1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*exp(-x*x)
+
+
+qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
+calcp en0 = qfunc (sqrt (2 * en0))
+
+task42 :: IO ()
+task42 = do
+    let g = g23
+    let n :: Integer
+        n = fromIntegral $ length g23
+    let log10 x = log x / log 10
+    let i :: Integral n => n
+        i = 10000
+    let code = codeG g
+    let diffV x y = weight $ x `sumBVectors` y
+    rVecs1 <- map (code !!) <$>
+        replicateM (i`div`2) (randomRIO (0,length code - 1))
+    rVecs2 <- map (code !!) <$>
+        replicateM (i`div`2) (randomRIO (0,length code - 1))
+    let funcGen :: Encoder -> Decoder -> IO Double
+        funcGen encoder decoder = do
+            let foo :: BVector -> [Double] -> Double
+                foo x c = fromIntegral $ decoder c `diffV` x
+            let enc x = forM x $ \r -> (r,) <$> mapM encoder r
+            (rVecsEnc1,rVecsEnc2) <- concurrently (enc rVecs1) (enc rVecs2)
+            let calc x = pure $ sum (map (uncurry foo) x)
+            (c1,c2) <- concurrently (calc rVecsEnc1) (calc rVecsEnc2)
+            pure $ (c1 + c2) / (fromIntegral $ i * n)
+    let fromdecibels :: Double -> Double
+        fromdecibels x = 10 ** (x / 10)
+    let dscDo decoder (fromdecibels -> en0) =
+            let func1Raw e = funcGen (dscEncode e) (decoder (dsc e) code)
+            in log10 $ unsafePerformIO (func1Raw (calcp en0))
+    let awgnDo decoder (fromdecibels -> en0) = log10 $ unsafePerformIO $ do
+            let e = 5
+            let n0 = e / en0
+            funcGen (awgnEncode n0 e) (decoder (awgn n0 e) code)
+    let func1 = dscDo decodeML
+    let func1mAp = dscDo decodeMaxAp
+    let func2 = awgnDo decodeML
+    let func2mAp = awgnDo decodeMaxAp
+    let f2d (t,f) = Data2D [Title t] [] f
+    (datasets :: [(String,[(Double,Double)])]) <-
+        mapConcurrently
+        (\(t,f) -> do
+              putStrLn $ "Evaluating " <> t
+              pure $ (t,map (\x -> (x,f x)) [(-2.0),(-1.5)..8]))
+        [ ("DSC, ML", func1)
+        , ("DSC, MAP", func1mAp)
+        , ("AWGN, ML", func2)
+        , ("AWGN, MAP", func2mAp) ]
+    void $ plot (SVG "task42PlotDimqTemp.svg") $ map f2d datasets
+
+fromDoubles :: [Double] -> BVector
+fromDoubles = map go
+  where
+    go 1 = True
+    go 0 = False
+    go e = error $ "fromDoubles: " <> show e
+
+
+toDoubles :: BVector -> [Double]
+toDoubles = map foo
+  where foo False = 0
+        foo True  = 1
+
+
+--wtf :: IO ()
+--wtf = do
+--    let x = encodeG g23 $ fromIntVector [1,1,1,1,1,1]
+--    let y = decodeML (dsc 0.1) (codeG g23) $ toDoubles x
+--    print x
+--    print y
 
 -- | Chapter 2 task 3 - individual task matrix G.
 g23 :: BMatrix
@@ -443,3 +573,13 @@ g23 =
     , [1, 1, 0, 1, 0, 1]
     , [0, 1, 1, 1, 1, 0]
     ]
+
+g23Dimq :: BMatrix
+g23Dimq = findGfromH h
+  where
+    h = map fromIntVector $
+        [ [1,0,1,0,0,0,0,0,0,1]
+        , [1,0,1,1,1,0,1,0,1,1]
+        , [0,1,1,0,1,1,1,0,0,1]
+        , [0,1,0,0,0,0,1,1,1,1]
+        ]
