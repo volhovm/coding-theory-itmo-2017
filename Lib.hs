@@ -233,8 +233,8 @@ task12 =
 
 buildZeroNN :: [BVector] -> [BVector]
 buildZeroNN h =
-    traceShow (map showVec d0) $
-    traceShow (map showVec $ solvingArea zero) $
+--    traceShow (map showVec d0) $
+--    traceShow (map showVec $ solvingArea zero) $
     fromMaybe (error "should exist") $ find zCondition $ allCombinations $ codeH h
   where
 --    kickWhilePossible $ delete zero $ codeH h
@@ -367,7 +367,7 @@ buildGilbertVarshamovH n k = genVectors (n-1) [initVec]
 illustrateGVH :: IO ()
 illustrateGVH = do
     void $ plot (PNG "kek.png")
-        [ Function2D [Title "Hamming"] [Range 1 22]
+        [ Function2D [Title "Hamming"] [Range (1::Double) 22]
           (\(round -> k) -> fst $ findDRange (2*k) k)
         , Function2D [Title "Gilbert-Varshamov"] [Range 1 22]
           (\(round -> k) -> snd $ findDRange (2*k) k)
@@ -489,35 +489,30 @@ erf x = sign*y
 qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
 calcp en0 = qfunc (sqrt (2 * en0))
 
-task42 :: IO ()
-task42 = do
-    let g = g23
+task42 :: Integer -> IO ()
+task42 i = do
+    let g = g23Dimq
     let n :: Integer
         n = fromIntegral $ length g23
     let log10 x = log x / log 10
-    let i :: Integral n => n
-        i = 10000
     let code = codeG g
     let diffV x y = weight $ x `sumBVectors` y
-    rVecs1 <- map (code !!) <$>
-        replicateM (i`div`2) (randomRIO (0,length code - 1))
-    rVecs2 <- map (code !!) <$>
-        replicateM (i`div`2) (randomRIO (0,length code - 1))
+    rVecs <- map (code !!) <$> replicateM (fromInteger i) (randomRIO (0,length code - 1))
     let funcGen :: Encoder -> Decoder -> IO Double
         funcGen encoder decoder = do
             let foo :: BVector -> [Double] -> Double
                 foo x c = fromIntegral $ decoder c `diffV` x
-            let enc x = forM x $ \r -> (r,) <$> mapM encoder r
-            (rVecsEnc1,rVecsEnc2) <- concurrently (enc rVecs1) (enc rVecs2)
-            let calc x = pure $ sum (map (uncurry foo) x)
-            (c1,c2) <- concurrently (calc rVecsEnc1) (calc rVecsEnc2)
-            pure $ (c1 + c2) / (fromIntegral $ i * n)
+            rVecsEnc <- forM rVecs $ \r -> (r,) <$> mapM encoder r
+            let nm = sum (map (uncurry foo) rVecsEnc)
+            let dnm = fromIntegral $ i * n
+            putText $ show nm <> " / " <> show dnm <> " = " <> (show $ nm / dnm)
+            pure $ nm / dnm
     let fromdecibels :: Double -> Double
         fromdecibels x = 10 ** (x / 10)
     let dscDo decoder (fromdecibels -> en0) =
             let func1Raw e = funcGen (dscEncode e) (decoder (dsc e) code)
-            in log10 $ unsafePerformIO (func1Raw (calcp en0))
-    let awgnDo decoder (fromdecibels -> en0) = log10 $ unsafePerformIO $ do
+            in log10 <$> func1Raw (calcp en0)
+    let awgnDo decoder (fromdecibels -> en0) = fmap log10 $ do
             let e = 5
             let n0 = e / en0
             funcGen (awgnEncode n0 e) (decoder (awgn n0 e) code)
@@ -525,16 +520,19 @@ task42 = do
     let func1mAp = dscDo decodeMaxAp
     let func2 = awgnDo decodeML
     let func2mAp = awgnDo decodeMaxAp
-    let f2d (t,f) = Data2D [Title t] [] f
+    let funcrange = [-2..4]++[4.5,4.7..8]
+    let f2d (t,f) = Data2D [Title t, Style Lines] [] f
     (datasets :: [(String,[(Double,Double)])]) <-
         mapConcurrently
         (\(t,f) -> do
               putStrLn $ "Evaluating " <> t
-              pure $ (t,map (\x -> (x,f x)) [(-2.0),(-1.5)..8]))
+              points <- mapM (\x -> (x,) <$> f x) funcrange
+              pure $ (t,points))
         [ ("DSC, ML", func1)
         , ("DSC, MAP", func1mAp)
         , ("AWGN, ML", func2)
         , ("AWGN, MAP", func2mAp) ]
+    print datasets
     void $ plot (SVG "task42PlotDimqTemp.svg") $ map f2d datasets
 
 fromDoubles :: [Double] -> BVector
@@ -575,11 +573,12 @@ g23 =
     ]
 
 g23Dimq :: BMatrix
-g23Dimq = findGfromH h
-  where
-    h = map fromIntVector $
-        [ [1,0,1,0,0,0,0,0,0,1]
-        , [1,0,1,1,1,0,1,0,1,1]
-        , [0,1,1,0,1,1,1,0,0,1]
-        , [0,1,0,0,0,0,1,1,1,1]
-        ]
+g23Dimq =
+    map fromIntVector $
+    [ [1, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+    , [0, 1, 0, 0, 0, 0, 1, 1, 1, 0]
+    , [0, 0, 1, 0, 0, 0, 0, 1, 0, 1]
+    , [0, 0, 0, 1, 0, 0, 0, 1, 1, 0]
+    , [0, 0, 0, 0, 1, 0, 1, 1, 0, 0]
+    , [0, 0, 0, 0, 0, 1, 1, 0, 1, 0]
+    ]

@@ -2,9 +2,9 @@
 
 module Main where
 
-import Universum
+import           Universum
 
-import Lib
+import           Lib
 
 main :: IO ()
 main = do
@@ -14,4 +14,4 @@ main = do
 --    let h = buildGilbertVarshamovH n k
 --    print $ distance h
 --    putStrLn $ showM h
-    task42
+    task42 10000
