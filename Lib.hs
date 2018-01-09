@@ -29,6 +29,7 @@ import qualified Data.HashSet             as HS
 import           Data.List                (findIndex, (!!))
 import           Data.Map.Strict          ((!))
 import qualified Data.Map.Strict          as M
+import           GHC.Conc                 (par)
 import           Graphics.EasyPlot
 import           System.IO.Unsafe         (unsafePerformIO)
 import           System.Random
@@ -525,47 +526,59 @@ calcp en0 =
 
 task42 :: Integer -> IO ()
 task42 i = do
-    let g = g23Dimq
+    let g = g23
     let n :: Integer
         n = fromIntegral $ length g23
     let log10 x = log x / log 10
     let code = codeG g
     let diffV x y = weight $ x `sumBVectors` y
-    rVecs <- map (code !!) <$> replicateM (fromInteger i) (randomRIO (0,length code - 1))
-    let funcGen :: Encoder -> Decoder -> IO Double
-        funcGen encoder decoder = do
-            let foo :: BVector -> [Double] -> Double
-                foo x c = fromIntegral $ decoder c `diffV` x
-            rVecsEnc <- forM rVecs $ \r -> (r,) <$> mapM encoder r
-            let nm = sum (map (uncurry foo) rVecsEnc)
-            let dnm = fromIntegral $ i * n
-            putText $ show nm <> " / " <> show dnm <> " = " <> (show $ nm / dnm)
-            pure $ nm / dnm
+    rVecsVar <-
+        newIORef =<<
+        map (code !!) <$> replicateM (fromInteger i) (randomRIO (0,length code - 1))
+    let funcGen :: Encoder -> Decoder -> Decoder -> (Double,Double)
+        funcGen encoder decoder1 decoder2 = unsafePerformIO $ fmap force $ do
+            (rVecsEnc :: [(BVector,[Double])]) <-
+                readIORef rVecsVar >>= \rVecs ->
+                forM rVecs (\r -> (r,) <$> mapM encoder r)
+            let calcRes dc =
+                    sum (map (\(a,b) -> fromIntegral $ dc b `diffV` a) rVecsEnc) /
+                    fromIntegral (i * n)
+            let r1 = force $ calcRes decoder1
+            let r2 = force $ calcRes decoder2
+            pure $ r1 `par` r2 `par` (r1,r2)
     let fromdecibels :: Double -> Double
         fromdecibels x = 10 ** (x / 10)
-    let dscDo decoder (fromdecibels -> en0) =
-            let func1Raw e = funcGen (dscEncode e) (decoder (dsc e) code)
-            in log10 <$> func1Raw (calcp en0)
-    let awgnDo decoder (fromdecibels -> en0) = fmap log10 $ do
+    let dscDo (fromdecibels -> en0) =
+            let e = (calcp en0)
+            in funcGen (dscEncode e)
+                       (decodeML (dsc e) code)
+                       (decodeMaxAp (dsc e) code)
+    let awgnDo (fromdecibels -> en0) =
             let e = 5
-            let n0 = e / en0
-            funcGen (awgnEncode n0 e) (decoder (awgn n0 e) code)
-    let func1 = dscDo decodeML
-    let func1mAp = dscDo decodeMaxAp
-    let func2 = awgnDo decodeML
-    let func2mAp = awgnDo decodeMaxAp
-    let funcrange = [-2..4]++[4.5,4.7..8]
+                n0 = e / en0
+            in funcGen (awgnEncode n0 e) (decodeML (awgn n0 e) code)
+                                         (decodeMaxAp (awgn n0 e) code)
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
+    let yToLog (x,y) = (x,log10 y)
+    let frange1 = [-2..4.5]++[4.6,4.8..7]
+    let frange2 = [-2..4]++[4.1,4.2..4.9]
     (datasets :: [(String,[(Double,Double)])]) <-
-        mapConcurrently
-        (\(t,f) -> do
+        map (second (map yToLog)) . concat <$>
+        mapM
+        (\(t,f,rng) -> do
               putStrLn $ "Evaluating " <> t
-              points <- mapM (\x -> (x,) <$> f x) funcrange
-              pure $ (t,points))
-        [ ("DSC, ML", func1)
-        , ("DSC, MAP", func1mAp)
-        , ("AWGN, ML", func2)
-        , ("AWGN, MAP", func2mAp) ]
+              points <-
+                  mapM (\x -> do putStrLn $ "calculating " <> t <> " in " <> show x
+                                 res <- pure $ force $ f x
+                                 putText $ "res is : " <> show res
+                                 pure $ force $ (x, res)) rng
+              let points1 = map (second fst) points
+              let points2 = map (second snd) points
+              !ret <- pure $ force $ [(t <> ", ML",points1), (t <> ", MAP",points2)]
+              putStrLn $ "Evaluated " <> t
+              pure ret)
+        [ ("DSC", dscDo, frange1), ("AWGN", awgnDo, frange2) ]
+    putText "mda"
     print datasets
     void $ plot (SVG "task42PlotDimqTemp.svg") $ map f2d datasets
 
@@ -634,3 +647,7 @@ task44 = do
     -- test from textbook
     -- putText $ showSyndromeLattice $ buildSyndromLattice $ map fromIntVector $ [[1,0,0],[1,0,1],[0,1,0],[0,0,1],[1,1,0],[1,1,1]]
     putText $ showSyndromeLattice $ buildSyndromLattice $ h23
+
+----------------------------------------------------------------------------
+-- Part 7
+----------------------------------------------------------------------------
