@@ -20,6 +20,7 @@ module Lib
 
 
 import           Nub                      (ordNub)
+import qualified Prelude
 import           Universum                hiding (transpose)
 import           Unsafe                   (unsafeHead, unsafeLast)
 
@@ -29,6 +30,7 @@ import qualified Data.HashSet             as HS
 import           Data.List                (findIndex, (!!))
 import           Data.Map.Strict          ((!))
 import qualified Data.Map.Strict          as M
+import           Data.Sequence            (ViewR (..), viewr)
 import           GHC.Conc                 (par)
 import           Graphics.EasyPlot
 import           System.IO.Unsafe         (unsafePerformIO)
@@ -59,6 +61,11 @@ showVec = map $ bool '0' '1'
 
 showM :: BMatrix -> String
 showM = intercalate "\n" . map showVec . transpose
+
+fromStrVec :: String -> BVector
+fromStrVec = map go
+  where go '0' = False
+        go '1' = True
 
 -- | Produces a list of binary vectors of length n.
 binaryVectors :: (Integral n) => n -> [BVector]
@@ -526,7 +533,7 @@ calcp en0 =
 
 task42 :: Integer -> IO ()
 task42 i = do
-    let g = g23
+    let g = h23Dimq
     let n :: Integer
         n = fromIntegral $ length g23
     let log10 x = log x / log 10
@@ -560,8 +567,9 @@ task42 i = do
                                          (decodeMaxAp (awgn n0 e) code)
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
     let yToLog (x,y) = (x,log10 y)
-    let frange1 = [-2..4.5]++[4.6,4.8..7]
+    let frange1 = [-2..4]++[4.5,4.7..8.5]
     let frange2 = [-2..4]++[4.1,4.2..4.9]
+
     (datasets :: [(String,[(Double,Double)])]) <-
         map (second (map yToLog)) . concat <$>
         mapM
@@ -649,5 +657,46 @@ task44 = do
     putText $ showSyndromeLattice $ buildSyndromLattice $ h23
 
 ----------------------------------------------------------------------------
--- Part 7
+-- 7.1 LROS
 ----------------------------------------------------------------------------
+
+-- | ЛРОС generator, first list is Λ_i, second list is S_i (initial).
+data LrosGen = LrosGen BVector BVector deriving Eq
+
+instance Show LrosGen where
+    show (LrosGen a b) = "LrosGen " <> showVec a <> " " <> showVec b
+
+emulateLros :: LrosGen -> [Bool]
+emulateLros (LrosGen coeffs st) = do
+    let curOut = unsafeLast st
+    let pr = scalar coeffs st
+    let newst = take (length st) $ pr : st
+    curOut : emulateLros (LrosGen coeffs newst)
+
+genLros :: Integer -> BVector -> [LrosGen]
+genLros n v | n > (fromIntegral $ length v) = error "genLros: you don't want that, use naive lros"
+genLros n v = [LrosGen y initState | y <- binaryVectors n]
+  where
+    initState = reverse $ take (fromIntegral n) v
+
+findLros :: BVector -> IO LrosGen
+findLros vec = do
+    go 2
+  where
+    go n | n > (fromIntegral $ length vec) = error "There always exists naive lros"
+         | otherwise = do
+              putText $ "Iterating for " <> show n
+              maybe (go $ n+1) pure $
+                  find (\lr -> vec `isPrefixOf` emulateLros lr) $ genLros n vec
+
+task71 :: IO ()
+task71 = do
+    s <- findLros $ fromStrVec "010011000111"
+    print s
+    putStrLn $ showVec $ take 22 $ emulateLros s
+
+----------------------------------------------------------------------------
+-- 7.6 BCH
+----------------------------------------------------------------------------
+
+т

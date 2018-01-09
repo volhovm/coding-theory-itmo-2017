@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2018-01-09 Tue 21:03 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Теория информации, решения задач части 4,7,8</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Волхов Михаил, M4139" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Теория информации, решения задач части 4,7,8</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#org59c4939">1. Задание 4.2</a></li>
+<li><a href="#org0775b75">2. Задание 4.4</a></li>
+<li><a href="#org7c93401">3. Задание 7.1</a></li>
+<li><a href="#org0bb7ec5">4. Приложение</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org59c4939" class="outline-2">
+<h2 id="org59c4939"><span class="section-number-2">1</span> Задание 4.2</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Был написан код переборного декодирования по максимуму правдоподобия
+и максимуму апостериорной вероятности. Эксперимент имел
+входным параметром \(i\) &#x2013; число итераций, код, задаваемый матрицей
+\(g\) (индивидуальная, из главы 2). Построение графика производилось
+следующим способом: выбиралось \(i\) случайных слов кода, для каждого
+слова \(w\) производилось кодирование (с помощью заданной модели канала) и
+декодирование (МАП или МВ), выдающее слово \(c\). Затем, считался вес
+разности \(|c + w|\) и прибавлялся к общему аккумулятору ошибок \(a\). В
+конце значение \(a\) делилось на суммарное количество (де)кодированных
+бит \(i * n\). Выборочные примеры кода приведены в приложении.
+</p>
+
+<p>
+Получившийся результат:
+</p>
+
+
+<div class="figure">
+<p><img src="./task42Plot.png" alt="task42Plot.png" width="80%" />
+</p>
+<p><span class="figure-number">Figure 1: </span>Зависимость логарифма ошибки на бит от \(Eb/N0\) (дБ)</p>
+</div>
+
+<p>
+Отметим, что декодирование по МАВ не отличается от декодирования по
+МП, то есть все декодированые \(c+e\) имели одинаковое расстояние до
+оригинального \(c\) вне зависимости от декодера.
+</p>
+
+<p>
+Энергетический выигрыш по сравнению с передачей информации без
+кодирования при ошибке \(10^{-5}\) составляет \(9.6 - 4.6 = 5\) дБ, то
+есть \(3.1\) раза для декодирования с мягкими решениями (АБГШ) и
+\(9.6 - 6.8 = 2.8\) дБ, то есть \(1.9\) раз для жестких решений
+(ДСК). Соответственно, по сравнению с асимптотами декодирования
+можем иметь энергетический выигрыш \(4.6+1.59=6.19\) дБ (\(4.14\) раз) для
+мягких и \(6.8-0.37=6.43\) дБ (\(4.4\) раза) для жестких решений.
+</p>
+</div>
+</div>
+<div id="outline-container-org0775b75" class="outline-2">
+<h2 id="org0775b75"><span class="section-number-2">2</span> Задание 4.4</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Были написаны программы построения решеток (синдромной и через МСФ),
+полученные решетки для \(H\) (синдромная) и \(G\) (\(H\)
+интерпретированная как \(G\) для МСФ) представлены на изображениях:
+</p>
+
+<p>
+Напомним, что матрица \(H\) имеет вид:
+</p>
+\begin{align*}
+H =
+\begin{pmatrix}
+0 & 0 & 1 & 1 & 0 & 1 & 1 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 1 & 0 & 1 & 1 & 0 \\
+1 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0 & 1 \\
+0 & 1 & 1 & 1 & 0 & 1 & 0 & 1 & 1 & 1
+\end{pmatrix}
+\end{align*}
+
+
+<div class="figure">
+<p><img src="./lattice2.png" alt="lattice2.png" width="80%" />
+</p>
+<p><span class="figure-number">Figure 2: </span>Решетка, построенная по проверочной матрице</p>
+</div>
+
+
+<div class="figure">
+<p><img src="./lattice1.png" alt="lattice1.png" width="80%" />
+</p>
+<p><span class="figure-number">Figure 3: </span>Решетка, построенная по порождающей матрице</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org7c93401" class="outline-2">
+<h2 id="org7c93401"><span class="section-number-2">3</span> Задание 7.1</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+ЛРОС тривиально строится перебором для небольших значений длины
+заданной последовательности (практически показано, что перебором
+сложно искать ЛРОС начиная с размера 13). Генератор приведен в
+приложении.
+</p>
+
+<p>
+Найденный ЛРОС имеет первоначальное состояние регистров \(110010\) и
+вектор мультипликаторов \(001101\). Первые 24 бита последовательности
+(12 заданых и 10 дополнительных): \(0100110001111001010110\).
+</p>
+</div>
+</div>
+<div id="outline-container-org0bb7ec5" class="outline-2">
+<h2 id="org0bb7ec5"><span class="section-number-2">4</span> Приложение</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Декодер по максимуму правдобия, максимуму апостериорной вероятности.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">Maximum</span><span style="color: #333333;"> </span><span style="color: #868B44;">likelihood</span><span style="color: #333333;"> </span><span style="color: #868B44;">decoder.</span>
+<span style="color: #8AAFFA;">decodeML</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Channel</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Double</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
+<span style="color: #8AAFFA;">decodeML</span><span style="color: #333333;"> </span>chan<span style="color: #333333;"> </span>codeWords<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
+<span style="color: #333333;">    </span>fst<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>maximumBy<span style="color: #333333;"> </span>(comparing<span style="color: #333333;"> </span>snd)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
+<span style="color: #333333;">    </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,aPrioriProb<span style="color: #333333;"> </span>c))<span style="color: #333333;"> </span>codeWords
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>aPrioriProb<span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>product<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(uncurry<span style="color: #333333;"> </span>chan)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">`zip`</span><span style="color: #333333;"> </span>y
+
+<span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">Maximum</span><span style="color: #333333;"> </span><span style="color: #868B44;">a</span><span style="color: #333333;"> </span><span style="color: #868B44;">posterior</span><span style="color: #333333;"> </span><span style="color: #868B44;">probability</span><span style="color: #333333;"> </span><span style="color: #868B44;">decoder.</span>
+<span style="color: #8AAFFA;">decodeMaxAp</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Channel</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Double</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
+<span style="color: #8AAFFA;">decodeMaxAp</span><span style="color: #333333;"> </span>chan<span style="color: #333333;"> </span>codeWords<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
+<span style="color: #333333;">    </span>fst<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>maximumBy<span style="color: #333333;"> </span>(comparing<span style="color: #333333;"> </span>snd)<span style="color: #333333;"> </span>pcy
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(c|y)</span>
+<span style="color: #333333;">    </span>pcy<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">M.!</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">*</span><span style="color: #333333;"> </span>pc<span style="color: #333333;"> </span><span style="color: #A197BF;">/</span><span style="color: #333333;"> </span>py))<span style="color: #333333;"> </span>codeWords
+
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">map</span><span style="color: #333333;"> </span><span style="color: #637579;">c</span><span style="color: #333333;"> </span><span style="color: #637579;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #637579;">p(y|c)</span>
+<span style="color: #333333;">    </span>computePyc<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Double</span>
+<span style="color: #333333;">    </span>computePyc<span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>product<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(uncurry<span style="color: #333333;"> </span>chan)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">`zip`</span><span style="color: #333333;"> </span>y
+<span style="color: #333333;">    </span>pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>M.fromList<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,computePyc<span style="color: #333333;"> </span>c))<span style="color: #333333;"> </span>codeWords
+
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(y)</span>
+<span style="color: #333333;">    </span>py<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>sum<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">M.!</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">*</span><span style="color: #333333;"> </span>pc)<span style="color: #333333;"> </span>codeWords
+
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(c)</span>
+<span style="color: #333333;">    </span>pc<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>1<span style="color: #A197BF;">/</span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>codeWords)
+</pre>
+</div>
+
+<p>
+Генератор ЛРОС для заданной последовательности.
+</p>
+<div class="org-src-container">
+<pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#1051;&#1056;&#1054;&#1057;</span><span style="color: #333333;"> </span><span style="color: #868B44;">generator,</span><span style="color: #333333;"> </span><span style="color: #868B44;">first</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#923;_i,</span><span style="color: #333333;"> </span><span style="color: #868B44;">second</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">S_i</span><span style="color: #333333;"> </span><span style="color: #868B44;">(initial).</span>
+<span style="color: #FFA070;">data</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
+
+<span style="color: #FFA070;">instance</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Show</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>show<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>a<span style="color: #333333;"> </span>b)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #868B44;">"LrosGen</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>a<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>b
+
+<span style="color: #8AAFFA;">emulateLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Bool</span>]
+<span style="color: #8AAFFA;">emulateLros</span><span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>st)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>curOut<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>unsafeLast<span style="color: #333333;"> </span>st
+<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>pr<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>scalar<span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>st
+<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>newst<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>(length<span style="color: #333333;"> </span>st)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>pr<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>st
+<span style="color: #333333;">    </span>curOut<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>newst)
+
+<span style="color: #8AAFFA;">allLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span>]
+<span style="color: #8AAFFA;">allLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>x<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>x<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n,<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n]
+
+<span style="color: #8AAFFA;">naiveLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span>
+<span style="color: #8AAFFA;">naiveLros</span><span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>(replicate<span style="color: #333333;"> </span>(length<span style="color: #333333;"> </span>v)<span style="color: #333333;"> </span><span style="color: #EF5C5F;">False</span>)<span style="color: #333333;"> </span>(reverse<span style="color: #333333;"> </span>v)
+
+<span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span>
+<span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>2
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">==</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>vec)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"There</span><span style="color: #333333;"> </span><span style="color: #868B44;">always</span><span style="color: #333333;"> </span><span style="color: #868B44;">exists</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
+<span style="color: #333333;">         </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>otherwise<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">              </span>putText<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span><span style="color: #868B44;">"Checking</span><span style="color: #333333;"> </span><span style="color: #868B44;">length</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>show<span style="color: #333333;"> </span>n
+<span style="color: #333333;">              </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>r<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>lr<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">`isPrefixOf`</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>lr)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>allLros<span style="color: #333333;"> </span>n
+<span style="color: #333333;">              </span>maybe<span style="color: #333333;"> </span>(go<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>n<span style="color: #A197BF;">+</span>1)<span style="color: #333333;"> </span>pure<span style="color: #333333;"> </span>r
+
+<span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">()</span>
+<span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">    </span>s<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>findLros<span style="color: #333333;"> </span>vec
+<span style="color: #333333;">    </span>print<span style="color: #333333;"> </span>s
+<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>22<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>s
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>]
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Волхов Михаил, M4139</p>
+<p class="date">Created: 2018-01-09 Tue 21:03</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
