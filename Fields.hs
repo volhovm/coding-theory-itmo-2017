@@ -19,9 +19,9 @@ module Fields where
 
 import qualified Prelude
 import           Universum       hiding ((<*>))
-import           Unsafe          (unsafeLast)
+import           Unsafe          (unsafeHead, unsafeLast)
 
-import           Control.Lens    (ix)
+import           Control.Lens    (ix, (%=), (.=))
 import           Data.List       ((!!))
 import           Data.Reflection (Reifies (..))
 
@@ -87,6 +87,7 @@ GenZ(8)
 GenZ(9)
 GenZ(11)
 GenZ(13)
+GenZ(9539)
 
 --instance WithTag a => WithTag (Z a) where
 --    getTag _ = getTag (Proxy :: Proxy a)
@@ -281,11 +282,84 @@ instance (Ring (FinPoly p (Z n)), PrimePoly n p, PrimeNat n, KnownNat p)
             b = fromIntegral $ natVal (Proxy @n)
         let s :: Integer
             s = deg (reflectCoeffPoly @p @n)
-        mkFinPoly $ f <^> (b ^ s - 1)
+        mkFinPoly $ f <^> (b ^ s - 2)
 
 testThings :: IO ()
 testThings = do
     let pPoly = [1,0,0,1,1]
     let pEnc = representBack 2 pPoly
-    let (x :: FinPoly 19 (Z 2)) = remakeFinPoly $ mkFinPoly (Poly [1,0]) <^> 15
-    print $ x
+    let (x :: FinPoly 19 (Z 2)) = mkFinPoly (Poly [1,0])
+    let z = x <^> 12
+    let y = finv z
+    print $ z
+    print $ y
+    print $ z <*> y
+
+----------------------------------------------------------------------------
+-- Gauss
+----------------------------------------------------------------------------
+
+-- | Row dominated matrix
+data Matrix a = Matrix [[a]] deriving Show
+
+-- | You pass linear system [A|b], where A is n×n and get list of
+-- solutions.
+gaussSolve :: forall a. (Eq a, Field a) => Matrix a -> Matrix a
+gaussSolve (Matrix m0)
+    | n > m = error "gaussSolve: n > m"
+    | otherwise = Matrix $ execState (diagonal1 >> diagonal2) m1
+  where
+    ix2 :: Int -> Int -> State [[a]] a
+    ix2 i j = do (x :: [a]) <- use (ix i)
+                 pure $ x !! j
+
+    n = length m0
+    m = length $ unsafeHead m0
+
+    diagonal1 :: State [[a]] ()
+    diagonal1 = forM_ [0..(n-1)] $ \(i::Int) -> do
+        -- Dividing by diagonal coefficient
+        k0 <- ix2 i i
+        -- If we're encountered empty row, we swap it with the first
+        -- non-zero row. If there is no, we fail.
+        k <- if k0 /= f0 then pure k0 else do
+                 otherCoeffs <- forM [i+1..(n-1)] $ \j -> (j,) <$> ix2 j i
+                 let alt = find (\(_,v) -> v /= f0) otherCoeffs
+                 case alt of
+                     Nothing -> error "Empty line, can't swap"
+                     Just (j,k') -> do
+                         rowJ <- use (ix j)
+                         rowI <- use (ix i)
+                         ix i .= rowI
+                         ix j .= rowJ
+                         pure k'
+
+        let km1 = finv k
+        forM_ [i..(m-1)] $ \j -> (ix i . ix j) %= (<*> km1)
+
+        -- For all lower levels, adding
+        forM_ [i+1..(n-1)] $ \j -> do
+            s <- ix2 j i
+            forM_ [i..m] $ \y -> do
+                x <- ix2 i y
+                ix j . ix y %= (\e -> e <-> (s <*> x))
+
+    diagonal2 :: State [[a]] ()
+    diagonal2 = forM_ (reverse [0..(n-1)]) $ \(i::Int) -> do
+        -- For all upper levels, adding
+        forM_ [0..i-1] $ \j -> do
+            s <- ix2 j i
+            forM_ [i..(m-1)] $ \y -> do
+                x <- ix2 i y
+                ix j . ix y %= (\e -> e <-> (s <*> x))
+
+    initialSort :: [[a]] -> [[a]]
+    initialSort = sortBy (comparing $ length . takeWhile (== f0))
+
+    m1 :: [[a]]
+    m1 = initialSort m0
+
+testGauss :: IO ()
+testGauss = print $ gaussSolve m
+  where
+    (m :: Matrix (Z 9539)) = Matrix $ map (map toZ) [[2,6,1,3030,1],[11,2,0,6892,2],[4,1,3,18312,3]]
