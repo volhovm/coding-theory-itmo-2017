@@ -15,17 +15,40 @@
 
 -- | Finite fields and stuff.
 
-module Fields where
+module Fields
+    ( Ring(..)
+    , (<->)
+    , (<^>)
+    , times
+    , Field(..)
+    , Euclidian(..)
+    , eDiv
+    , eMod
+
+    , gcdEucl
+
+    , Z (..)
+    , toZ
+    , PrimeNat
+    , Poly(..)
+    , prettyPoly
+    , deg
+    , FinPoly (..)
+    , mkFinPoly
+    , representBack
+    , remakeFinPoly
+
+    , gaussSolve
+    ) where
 
 import qualified Prelude
-import           Universum       hiding ((<*>))
-import           Unsafe          (unsafeHead, unsafeLast)
+import           Universum    hiding ((<*>))
+import           Unsafe       (unsafeHead, unsafeLast)
 
-import           Control.Lens    (ix, (%=), (.=))
-import           Data.List       ((!!))
-import           Data.Reflection (Reifies (..))
+import           Control.Lens (ix, (%=), (.=))
+import           Data.List    ((!!))
 
-import           Crypto          (inverse)
+import           Crypto       (inverse)
 
 ----------------------------------------------------------------------------
 -- Rings
@@ -109,7 +132,7 @@ instance (PrimeNat n) => Field (Z n) where
 
 -- | Empty polynomial is equivalent to [0]. Big endian (head is higher
 -- degree coefficient).
-newtype Poly a = Poly { fromPoly :: [a] } deriving (Functor)
+newtype Poly a = Poly [a] deriving (Functor)
 
 instance Show a => Show (Poly a) where
     show (Poly l) = "Poly " ++ show l
@@ -284,13 +307,14 @@ instance (Ring (FinPoly p (Z n)), PrimePoly n p, PrimeNat n, KnownNat p)
             s = deg (reflectCoeffPoly @p @n)
         mkFinPoly $ f <^> (b ^ s - 2)
 
-testThings :: IO ()
-testThings = do
+_testFinPolys :: IO ()
+_testFinPolys = do
     let pPoly = [1,0,0,1,1]
     let pEnc = representBack 2 pPoly
     let (x :: FinPoly 19 (Z 2)) = mkFinPoly (Poly [1,0])
-    let z = x <^> 12
+    let z = x <^> (12 :: Int)
     let y = finv z
+    print pEnc
     print $ z
     print $ y
     print $ z <*> y
@@ -359,7 +383,7 @@ gaussSolve (Matrix m0)
     m1 :: [[a]]
     m1 = initialSort m0
 
-testGauss :: IO ()
-testGauss = print $ gaussSolve m
+_testGauss :: IO ()
+_testGauss = print $ gaussSolve m
   where
     (m :: Matrix (Z 9539)) = Matrix $ map (map toZ) [[2,6,1,3030,1],[11,2,0,6892,2],[4,1,3,18312,3]]
