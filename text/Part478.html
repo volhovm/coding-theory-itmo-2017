@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-01-09 Tue 21:03 -->
+<!-- 2018-01-10 Wed 08:15 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Теория информации, решения задач части 4,7,8</title>
@@ -255,16 +255,16 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org59c4939">1. Задание 4.2</a></li>
-<li><a href="#org0775b75">2. Задание 4.4</a></li>
-<li><a href="#org7c93401">3. Задание 7.1</a></li>
-<li><a href="#org0bb7ec5">4. Приложение</a></li>
+<li><a href="#org918692e">1. Задание 4.2</a></li>
+<li><a href="#orge495661">2. Задание 4.4</a></li>
+<li><a href="#org4a04722">3. Задание 7.1</a></li>
+<li><a href="#org8a3dba4">4. Приложение</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org59c4939" class="outline-2">
-<h2 id="org59c4939"><span class="section-number-2">1</span> Задание 4.2</h2>
+<div id="outline-container-org918692e" class="outline-2">
+<h2 id="org918692e"><span class="section-number-2">1</span> Задание 4.2</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Был написан код переборного декодирования по максимуму правдоподобия
@@ -285,7 +285,7 @@ for the JavaScript code in this tag.
 
 
 <div class="figure">
-<p><img src="./task42Plot.png" alt="task42Plot.png" width="80%" />
+<p><img src="./task42Plot.png" alt="task42Plot.png" width="75%" />
 </p>
 <p><span class="figure-number">Figure 1: </span>Зависимость логарифма ошибки на бит от \(Eb/N0\) (дБ)</p>
 </div>
@@ -307,8 +307,8 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-org0775b75" class="outline-2">
-<h2 id="org0775b75"><span class="section-number-2">2</span> Задание 4.4</h2>
+<div id="outline-container-orge495661" class="outline-2">
+<h2 id="orge495661"><span class="section-number-2">2</span> Задание 4.4</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Были написаны программы построения решеток (синдромной и через МСФ),
@@ -331,27 +331,27 @@ H =
 
 
 <div class="figure">
-<p><img src="./lattice2.png" alt="lattice2.png" width="80%" />
+<p><img src="./lattice2.png" alt="lattice2.png" width="75%" />
 </p>
 <p><span class="figure-number">Figure 2: </span>Решетка, построенная по проверочной матрице</p>
 </div>
 
 
 <div class="figure">
-<p><img src="./lattice1.png" alt="lattice1.png" width="80%" />
+<p><img src="./lattice1.png" alt="lattice1.png" width="75%" />
 </p>
 <p><span class="figure-number">Figure 3: </span>Решетка, построенная по порождающей матрице</p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org7c93401" class="outline-2">
-<h2 id="org7c93401"><span class="section-number-2">3</span> Задание 7.1</h2>
+<div id="outline-container-org4a04722" class="outline-2">
+<h2 id="org4a04722"><span class="section-number-2">3</span> Задание 7.1</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 ЛРОС тривиально строится перебором для небольших значений длины
 заданной последовательности (практически показано, что перебором
-сложно искать ЛРОС начиная с размера 13). Генератор приведен в
+сложно искать ЛРОС начиная с размера 22). Генератор приведен в
 приложении.
 </p>
 
@@ -362,8 +362,8 @@ H =
 </p>
 </div>
 </div>
-<div id="outline-container-org0bb7ec5" class="outline-2">
-<h2 id="org0bb7ec5"><span class="section-number-2">4</span> Приложение</h2>
+<div id="outline-container-org8a3dba4" class="outline-2">
+<h2 id="org8a3dba4"><span class="section-number-2">4</span> Приложение</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Декодер по максимуму правдобия, максимуму апостериорной вероятности.
@@ -404,7 +404,7 @@ H =
 </p>
 <div class="org-src-container">
 <pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#1051;&#1056;&#1054;&#1057;</span><span style="color: #333333;"> </span><span style="color: #868B44;">generator,</span><span style="color: #333333;"> </span><span style="color: #868B44;">first</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#923;_i,</span><span style="color: #333333;"> </span><span style="color: #868B44;">second</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">S_i</span><span style="color: #333333;"> </span><span style="color: #868B44;">(initial).</span>
-<span style="color: #FFA070;">data</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
+<span style="color: #FFA070;">data</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #FFA070;">deriving</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Eq</span>
 
 <span style="color: #FFA070;">instance</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Show</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #FFA070;">where</span>
 <span style="color: #333333;">    </span>show<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>a<span style="color: #333333;"> </span>b)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #868B44;">"LrosGen</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>a<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>b
@@ -416,29 +416,27 @@ H =
 <span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>newst<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>(length<span style="color: #333333;"> </span>st)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>pr<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>st
 <span style="color: #333333;">    </span>curOut<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>newst)
 
-<span style="color: #8AAFFA;">allLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span>]
-<span style="color: #8AAFFA;">allLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>x<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>x<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n,<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n]
-
-<span style="color: #8AAFFA;">naiveLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span>
-<span style="color: #8AAFFA;">naiveLros</span><span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>(replicate<span style="color: #333333;"> </span>(length<span style="color: #333333;"> </span>v)<span style="color: #333333;"> </span><span style="color: #EF5C5F;">False</span>)<span style="color: #333333;"> </span>(reverse<span style="color: #333333;"> </span>v)
+<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span>]
+<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>v)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"genLros:</span><span style="color: #333333;"> </span><span style="color: #868B44;">you</span><span style="color: #333333;"> </span><span style="color: #868B44;">don't</span><span style="color: #333333;"> </span><span style="color: #868B44;">want</span><span style="color: #333333;"> </span><span style="color: #868B44;">that,</span><span style="color: #333333;"> </span><span style="color: #868B44;">use</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
+<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>y<span style="color: #333333;"> </span>initState<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n]
+<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
+<span style="color: #333333;">    </span>initState<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>reverse<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span>n)<span style="color: #333333;"> </span>v
 
 <span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span>
 <span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
 <span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>2
 <span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">==</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>vec)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"There</span><span style="color: #333333;"> </span><span style="color: #868B44;">always</span><span style="color: #333333;"> </span><span style="color: #868B44;">exists</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
+<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>vec)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"There</span><span style="color: #333333;"> </span><span style="color: #868B44;">always</span><span style="color: #333333;"> </span><span style="color: #868B44;">exists</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
 <span style="color: #333333;">         </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>otherwise<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">              </span>putText<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span><span style="color: #868B44;">"Checking</span><span style="color: #333333;"> </span><span style="color: #868B44;">length</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>show<span style="color: #333333;"> </span>n
-<span style="color: #333333;">              </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>r<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>lr<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">`isPrefixOf`</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>lr)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>allLros<span style="color: #333333;"> </span>n
-<span style="color: #333333;">              </span>maybe<span style="color: #333333;"> </span>(go<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>n<span style="color: #A197BF;">+</span>1)<span style="color: #333333;"> </span>pure<span style="color: #333333;"> </span>r
+<span style="color: #333333;">              </span>putText<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span><span style="color: #868B44;">"Iterating</span><span style="color: #333333;"> </span><span style="color: #868B44;">for</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>show<span style="color: #333333;"> </span>n
+<span style="color: #333333;">              </span>maybe<span style="color: #333333;"> </span>(go<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>n<span style="color: #A197BF;">+</span>1)<span style="color: #333333;"> </span>pure<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
+<span style="color: #333333;">                  </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>lr<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">`isPrefixOf`</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>lr)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>genLros<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>vec
 
 <span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">()</span>
 <span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">    </span>s<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>findLros<span style="color: #333333;"> </span>vec
+<span style="color: #333333;">    </span>s<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>findLros<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>fromStrVec<span style="color: #333333;"> </span><span style="color: #868B44;">"010011000111"</span>
 <span style="color: #333333;">    </span>print<span style="color: #333333;"> </span>s
 <span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>22<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>s
-<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">False</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>,<span style="color: #EF5C5F;">True</span>]
 </pre>
 </div>
 </div>
@@ -446,7 +444,7 @@ H =
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Волхов Михаил, M4139</p>
-<p class="date">Created: 2018-01-09 Tue 21:03</p>
+<p class="date">Created: 2018-01-10 Wed 08:15</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
