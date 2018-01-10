@@ -36,6 +36,7 @@ module Fields
     , deg
     , FinPoly (..)
     , mkFinPoly
+    , isPrimePoly
     , representBack
     , remakeFinPoly
 
@@ -47,7 +48,7 @@ import           Universum    hiding ((<*>))
 import           Unsafe       (unsafeHead, unsafeLast)
 
 import           Control.Lens (ix, (%=), (.=))
-import           Data.List    ((!!))
+import           Data.List    (nub, (!!))
 
 ----------------------------------------------------------------------------
 -- Rings
@@ -101,7 +102,7 @@ class Ring a => Field a where
 ----------------------------------------------------------------------------
 
 -- Z/nZ
-newtype Z (a :: Nat) = Z Integer deriving (Num, Eq, Ord, Enum, Real, Integral)
+newtype Z (a :: Nat) = Z { unZ :: Integer } deriving (Num, Eq, Ord, Enum, Real, Integral)
 
 instance Show (Z a) where
     show (Z i) = show i
@@ -139,11 +140,13 @@ instance (KnownNat n) => Ring (Z n) where
 -- | Naive search for any group generator.
 findGenerator :: forall a. (Show a, Field a, Eq a) => [a] -> a
 findGenerator elems =
-    fromMaybe (error "should exist") $
-    find (\g -> length (genOrderSet g) == n - 2) $ filter (/= f0) elems
+    fromMaybe (error "Couldn't find generator!") $
+    find (\g -> let s = genOrderSet [] g g in length s == n - 1) $ filter (/= f0) elems
   where
     n = length elems
-    genOrderSet g = takeWhile (/= f1) (iterate (<*> g) g)
+    genOrderSet acc g0 g | g == f1 = nub $ f1 : acc
+                         | g `elem` acc = acc
+                         | otherwise = genOrderSet (g:acc) g0 (g <*> g0)
 
 instance (PrimeNat n) => Field (Z n) where
     finv (Z a) = toZ $ a `fastExp` (natVal (Proxy :: Proxy n) - 2)
@@ -188,6 +191,7 @@ instance (Eq a, Ring a) => Eq (Poly a) where
 
 deg ::  (Eq a, Ring a, Integral n) => Poly a -> n
 deg (stripZ -> (Poly p)) = fromIntegral $ length p - 1
+
 
 -- Zips two lists adding zeroes to end of the shortest one
 zip0 :: (Ring a) => [a] -> [a] -> [(a,a)]
@@ -314,6 +318,13 @@ allFinPolys = map (FinPoly . stripZ . Poly . (map toZ)) $ binGen s
         let x = binGen (n-1)
         in mconcat $ map (\i -> map (i :) x) [0..b-1]
 
+isPrimePoly :: forall n . (KnownNat n, Euclidian (Poly (Z n))) => Poly (Z n) -> Bool
+isPrimePoly p@(Poly pP) =
+    let i = representBack (natVal $ Proxy @n) (map unZ pP)
+        lesspolys :: [Poly (Z n)]
+        lesspolys = map (Poly . map toZ . represent (natVal $ Proxy @n)) [2..(i-1)]
+    in all (\pl -> p `eMod` pl /= f0) lesspolys
+
 mkFinPoly :: forall p n . (KnownNat p, PrimeNat n) => Poly (Z n) -> FinPoly p (Z n)
 mkFinPoly x = FinPoly $ (stripZ x) `eMod` getCoeffPoly @p
 
@@ -335,6 +346,8 @@ class PrimePoly (n :: Nat) (p :: Nat) where
 
 -- 19 = x^4 + x + 1 is prime poly in F_2
 instance PrimePoly 2 19
+-- 75 = x^6 + x^3 + x + 1
+instance PrimePoly 2 75
 --instance PrimePoly 1 19
 
 instance (Ring (FinPoly p (Z n)), PrimePoly n p, PrimeNat n, KnownNat p)
@@ -442,3 +455,21 @@ _testGenerators = do
     print $ take 20 $ iterate (<*> g) g
     print (allFinPolys :: [FinPoly 19 (Z 2)])
     print $ getGen @(FinPoly 19 (Z 2))
+    print $ allFinPolys @75 @2
+
+_testPrimality :: IO ()
+_testPrimality = do
+    print $ isPrimePoly $ (Poly [1,0,0,1,1] :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly [1,1,1] :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly [1,0,0,0,1,1,1,0,1] :: Poly (Z 2))
+    putText "posos"
+    print $ isPrimePoly $ (Poly (map toZ $ represent 2 75) :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly (map toZ $ reverse $ represent 2 75) :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly (map toZ $ represent 2 57) :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly (map toZ $ represent 2 67) :: Poly (Z 2))
+    print $ isPrimePoly $ (Poly (map toZ $ represent 2 51) :: Poly (Z 2))
+    let (x :: FinPoly 105 (Z 2)) = mkFinPoly $ Poly [1,1]
+    forM_ [1..15] $ \(i :: Integer) -> print i >> print (x <^> i)
+    print $ getGen @(FinPoly 75 (Z 2))

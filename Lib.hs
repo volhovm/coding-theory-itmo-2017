@@ -714,7 +714,29 @@ cyclotomicClasses = go [[0]] 0
            else go (map (`mod` (fsize - 1)) newX:s) (gi+1)
     fsize = getFieldSize (Proxy @a)
 
+matchCyclotomic :: [[Integer]] -> Integer -> [[Integer]]
+matchCyclotomic classes d =
+    fromMaybe (error "mda") $
+    find (\comb -> [1..d] `isPrefixOf` sort (ordNub (concat comb))) $
+    allCombinations classes
+
+minFromCyclotomic ::
+       forall p n. (PrimeNat n, KnownNat p, Field (FinPoly p (Z n)))
+    => [Integer]
+    -> [FinPoly p (Z n)]
+minFromCyclotomic ccl = map (\i -> mkFinPoly (Poly [1, 0]) <-> (getGen <^> i)) ccl
+
+type MishFinPoly = (FinPoly 75 (Z 2))
+
 tao :: IO ()
 tao = do
     print $ getFieldSize (Proxy @(FinPoly 19 (Z 2)))
     print $ cyclotomicClasses @(FinPoly 19 (Z 2))
+    let ccl = cyclotomicClasses @MishFinPoly
+    print ccl
+    let cclChosen = matchCyclotomic ccl 7
+    print cclChosen
+    print $ getGen @MishFinPoly
+    print "mda"
+    let x = map (minFromCyclotomic @75 @2) cclChosen
+    print x
