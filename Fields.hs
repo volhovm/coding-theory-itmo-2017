@@ -19,6 +19,7 @@ module Fields
     ( Ring(..)
     , (<->)
     , (<^>)
+    , fastExp
     , times
     , Field(..)
     , Euclidian(..)
@@ -48,8 +49,6 @@ import           Unsafe       (unsafeHead, unsafeLast)
 import           Control.Lens (ix, (%=), (.=))
 import           Data.List    ((!!))
 
-import           Crypto       (inverse)
-
 ----------------------------------------------------------------------------
 -- Rings
 ----------------------------------------------------------------------------
@@ -70,6 +69,19 @@ times (fromIntegral -> n) a = foldl' (<+>) f0 $ replicate n a
 (<^>) :: (Integral n, Ring a) => a -> n -> a
 (<^>) a (fromIntegral -> n) = foldl' (<*>) f1 $ replicate n a
 
+-- | Fast powering algorithm for calculating a^p (mod p).
+fastExp :: forall a n . (Ring a, Integral n) => a -> n -> a
+fastExp g n = power g n
+  where
+    power :: a -> n -> a
+    power _ 0 = f1
+    power a 1 = a
+    power a b = do
+        let (bdiv,bmod) = b `divMod` 2
+        let bnext = a `power` bdiv
+        if | bmod == 0 -> bnext <*> bnext
+           | otherwise -> bnext <*> bnext <*> a
+
 instance Ring Integer where
     f0 = 0
     f1 = 1
@@ -80,6 +92,9 @@ instance Ring Integer where
 class Ring a => Field a where
     finv :: a -> a
     -- ^ Multiplicative inverse
+    getGen :: a
+    -- ^ Generator
+    getFieldSize :: Proxy a -> Integer
 
 ----------------------------------------------------------------------------
 -- Integer ring/field
@@ -110,10 +125,8 @@ GenZ(8)
 GenZ(9)
 GenZ(11)
 GenZ(13)
+GenZ(17)
 GenZ(9539)
-
---instance WithTag a => WithTag (Z a) where
---    getTag _ = getTag (Proxy :: Proxy a)
 
 instance (KnownNat n) => Ring (Z n) where
     f0 = Z 0
@@ -123,8 +136,19 @@ instance (KnownNat n) => Ring (Z n) where
     fneg (Z i) = toZ $ natVal (Proxy :: Proxy n) - i
     (Z a) <*> (Z b) = toZ $ a * b
 
+-- | Naive search for any group generator.
+findGenerator :: forall a. (Show a, Field a, Eq a) => [a] -> a
+findGenerator elems =
+    fromMaybe (error "should exist") $
+    find (\g -> length (genOrderSet g) == n - 2) $ filter (/= f0) elems
+  where
+    n = length elems
+    genOrderSet g = takeWhile (/= f1) (iterate (<*> g) g)
+
 instance (PrimeNat n) => Field (Z n) where
-    finv a = inverse a (Z (natVal (Proxy :: Proxy n)))
+    finv (Z a) = toZ $ a `fastExp` (natVal (Proxy :: Proxy n) - 2)
+    getGen = findGenerator $ map toZ [0..(natVal (Proxy :: Proxy n) - 1)]
+    getFieldSize _ = natVal (Proxy :: Proxy n)
 
 ----------------------------------------------------------------------------
 -- Polynomials
@@ -216,21 +240,21 @@ assert b str action = bool (error str) action b
 
 -- | a / b = (quotient,remainder)
 euclPoly :: (Eq a, Field a) => Poly a -> Poly a -> (Poly a, Poly a)
-euclPoly (stripZ -> a) (stripZ -> b@(Poly p2)) =
+euclPoly (stripZ -> a) (stripZ -> b@(Poly bPoly)) =
     let res@(q,r) = euclPolyGo f0 a
     in assert ((b <*> q) <+> r == a) "EuclPoly assert failed" res
   where
-    euclPolyGo (stripZ -> k) (stripZ -> r)
-        | (deg r :: Integer) < deg b || r == f0 = (k,r)
-    euclPolyGo (stripZ -> k) (stripZ -> r@(Poly pr)) =
-        let e = deg r
-            d = deg b
-            re = pr !! 0
-            bd = p2 !! 0
-            x = Poly $ (re <*> (finv bd)) : replicate (e - d) f0
-            k' = k <+> x
+    euclPolyGo (stripZ -> q) (stripZ -> r)
+        | (deg r :: Integer) < deg b || r == f0 = (q,r)
+    euclPolyGo (stripZ -> q) (stripZ -> r@(Poly rPoly)) =
+        let rDeg = deg r
+            bDeg = deg b
+            re = rPoly !! 0
+            bd = bPoly !! 0
+            x = Poly $ (re <*> (finv bd)) : replicate (rDeg - bDeg) f0
+            q' = q <+> x
             r' = r <-> (x <*> b)
-        in euclPolyGo k' r'
+        in euclPolyGo q' r'
 
 instance (Field a, Eq a) => Euclidian (Poly a) where
     (</>) = euclPoly
@@ -245,6 +269,7 @@ gcdEucl a b =
     gcdEuclGo r0 r1 =
         let (_,r) = r0 </> r1
         in if r == f0 then r1 else gcdEuclGo r1 r
+
 
 ----------------------------------------------------------------------------
 -- Polynomials quotieng rings/fields
@@ -271,13 +296,26 @@ getCoeffPoly :: forall p n. (KnownNat p, KnownNat n) => Poly (Z n)
 getCoeffPoly = map toZ (reflectCoeffPoly @p @n)
 
 -- Empty polynomial is equivalent for [0]. Head -- higher degree.
-newtype FinPoly p a = FinPoly (Poly a)
+newtype FinPoly p a = FinPoly (Poly a) deriving Eq
 
 instance (Show a) => Show (FinPoly p a) where
     show (FinPoly x) = "Fin" <> show x
 
+allFinPolys :: forall p n. (KnownNat p, KnownNat n) => [FinPoly p (Z n)]
+allFinPolys = map (FinPoly . stripZ . Poly . (map toZ)) $ binGen s
+  where
+    b :: Integer
+    b = fromIntegral $ natVal (Proxy @n)
+    s :: Integer
+    s = deg (reflectCoeffPoly @p @n)
+    binGen :: Integer -> [[Integer]]
+    binGen 0 = [[]]
+    binGen n =
+        let x = binGen (n-1)
+        in mconcat $ map (\i -> map (i :) x) [0..b-1]
+
 mkFinPoly :: forall p n . (KnownNat p, PrimeNat n) => Poly (Z n) -> FinPoly p (Z n)
-mkFinPoly x = FinPoly $ x `eMod` getCoeffPoly @p
+mkFinPoly x = FinPoly $ (stripZ x) `eMod` getCoeffPoly @p
 
 remakeFinPoly :: forall p n . (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> FinPoly p (Z n)
 remakeFinPoly (FinPoly x) = mkFinPoly x
@@ -297,15 +335,19 @@ class PrimePoly (n :: Nat) (p :: Nat) where
 
 -- 19 = x^4 + x + 1 is prime poly in F_2
 instance PrimePoly 2 19
+--instance PrimePoly 1 19
 
 instance (Ring (FinPoly p (Z n)), PrimePoly n p, PrimeNat n, KnownNat p)
          => Field (FinPoly p (Z n)) where
-    finv (FinPoly f) = do
+    finv (FinPoly f) =
+        mkFinPoly $ f <^> (getFieldSize (Proxy @(FinPoly p (Z n))) - 2)
+    getGen = findGenerator allFinPolys
+    getFieldSize _ = do
         let b :: Integer
             b = fromIntegral $ natVal (Proxy @n)
         let s :: Integer
             s = deg (reflectCoeffPoly @p @n)
-        mkFinPoly $ f <^> (b ^ s - 2)
+        (b ^ s)
 
 _testFinPolys :: IO ()
 _testFinPolys = do
@@ -387,3 +429,16 @@ _testGauss :: IO ()
 _testGauss = print $ gaussSolve m
   where
     (m :: Matrix (Z 9539)) = Matrix $ map (map toZ) [[2,6,1,3030,1],[11,2,0,6892,2],[4,1,3,18312,3]]
+
+_testGenerators :: IO ()
+_testGenerators = do
+    print $ getGen @(Z 17)
+    let (g :: Poly (Z 2)) = Poly [1,1,1]
+    print g
+    print (finv (Z 1 :: Z 2))
+    let h = Poly [1,1]
+    print h
+    print $ g `euclPoly` h
+    print $ take 20 $ iterate (<*> g) g
+    print (allFinPolys :: [FinPoly 19 (Z 2)])
+    print $ getGen @(FinPoly 19 (Z 2))

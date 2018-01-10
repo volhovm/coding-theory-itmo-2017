@@ -19,7 +19,6 @@ executable info-theory-bin
   hs-source-dirs:      .
   main-is:             Main.hs
   other-modules:       Lib
-                     , Crypto
                      , Fields
   build-depends:       async
                      , base

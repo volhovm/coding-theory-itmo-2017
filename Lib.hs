@@ -1,6 +1,7 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TypeApplications  #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE NoImplicitPrelude   #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
 
@@ -21,7 +22,7 @@ module Lib
 
 import           Nub                      (ordNub)
 import qualified Prelude
-import           Universum                hiding (transpose)
+import           Universum                hiding (transpose, (<*>))
 import           Unsafe                   (unsafeHead, unsafeLast)
 
 import           Control.Concurrent.Async
@@ -36,6 +37,7 @@ import           Graphics.EasyPlot
 import           System.IO.Unsafe         (unsafePerformIO)
 import           System.Random
 
+import           Fields
 
 ----------------------------------------------------------------------------
 -- Utilities
@@ -698,3 +700,21 @@ task71 = do
 ----------------------------------------------------------------------------
 -- 7.6 BCH
 ----------------------------------------------------------------------------
+
+cyclotomicClasses :: forall a . (Eq a,Field a) => [[Integer]]
+cyclotomicClasses = go [[0]] 0
+  where
+    go :: [[Integer]] -> Integer -> [[Integer]]
+    go s gi | gi >= fsize - 1 = s
+    go s gi =
+        let newX :: [Integer]
+            newX = gi : takeWhile (/= gi) (iterate (\i -> i * 2 `mod` (fsize - 1)) (gi*2))
+        in if gi `elem` (concat s)
+           then go s (gi+1)
+           else go (map (`mod` (fsize - 1)) newX:s) (gi+1)
+    fsize = getFieldSize (Proxy @a)
+
+tao :: IO ()
+tao = do
+    print $ getFieldSize (Proxy @(FinPoly 19 (Z 2)))
+    print $ cyclotomicClasses @(FinPoly 19 (Z 2))
