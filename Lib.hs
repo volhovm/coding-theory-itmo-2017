@@ -20,21 +20,19 @@ module Lib
     ) where
 
 
-import           Nub                      (ordNub)
+import           Nub               (ordNub)
 import qualified Prelude
-import           Universum                hiding (transpose, (<*>))
-import           Unsafe                   (unsafeHead, unsafeLast)
+import           Universum         hiding (transpose, (<*>))
+import           Unsafe            (unsafeHead, unsafeLast)
 
-import           Control.Concurrent.Async
-import           Control.Lens             (at, ix, (?=))
-import qualified Data.HashSet             as HS
-import           Data.List                (findIndex, (!!))
-import           Data.Map.Strict          ((!))
-import qualified Data.Map.Strict          as M
-import           Data.Sequence            (ViewR (..), viewr)
-import           GHC.Conc                 (par)
+import           Control.Lens      (at, ix, (?=))
+import qualified Data.HashSet      as HS
+import           Data.List         (findIndex, (!!))
+import           Data.Map.Strict   ((!))
+import qualified Data.Map.Strict   as M
+import           GHC.Conc          (par)
 import           Graphics.EasyPlot
-import           System.IO.Unsafe         (unsafePerformIO)
+import           System.IO.Unsafe  (unsafePerformIO)
 import           System.Random
 
 import           Fields
@@ -68,6 +66,7 @@ fromStrVec :: String -> BVector
 fromStrVec = map go
   where go '0' = False
         go '1' = True
+        go _   = error "fromStrVec"
 
 -- | Produces a list of binary vectors of length n.
 binaryVectors :: (Integral n) => n -> [BVector]
@@ -723,20 +722,32 @@ matchCyclotomic classes d =
 minFromCyclotomic ::
        forall p n. (PrimeNat n, KnownNat p, Field (FinPoly p (Z n)))
     => [Integer]
-    -> [FinPoly p (Z n)]
-minFromCyclotomic ccl = map (\i -> mkFinPoly (Poly [1, 0]) <-> (getGen <^> i)) ccl
+    -> FinPoly p (Z n)
+minFromCyclotomic ccl =
+    foldr1 (<*>) $ map (\i -> mkFinPoly (Poly [1, 0]) <-> (getGen <^> i)) ccl
 
-type MishFinPoly = (FinPoly 75 (Z 2))
+type MishFinPoly = (FinPoly 67 (Z 2))
+
+-- | Finds minimal polynomials forming BCH generator.
+buildBCH :: forall p n . (PrimePoly p n, KnownNat p, PrimeNat n) => Integer -> [FinPoly p (Z n)]
+buildBCH d =
+    let ccl = cyclotomicClasses @(FinPoly p (Z n))
+        (cclChosen :: [[Integer]]) = matchCyclotomic ccl d
+    in map (minFromCyclotomic @p @n) cclChosen
 
 tao :: IO ()
-tao = do
-    print $ getFieldSize (Proxy @(FinPoly 19 (Z 2)))
-    print $ cyclotomicClasses @(FinPoly 19 (Z 2))
-    let ccl = cyclotomicClasses @MishFinPoly
-    print ccl
-    let cclChosen = matchCyclotomic ccl 7
-    print cclChosen
-    print $ getGen @MishFinPoly
-    print "mda"
-    let x = map (minFromCyclotomic @75 @2) cclChosen
-    print x
+tao = print $ buildBCH @67 @2 7
+
+-- | Encoding in cyclic codes is just multiplying by generator.
+bchEncode :: (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> [Z n] -> FinPoly p (Z n)
+bchEncode g m = g <*> (mkFinPoly $ Poly $ reverse m)
+
+-- | Creates generator matrix from cyclic code generator polynomial.
+cyclicToG :: (Integral i) => i -> BVector -> BMatrix
+cyclicToG (fromIntegral -> n) g =
+    transpose $ map (\i -> pz i ++ g ++ pz (k-i-1)) [0..(k-1)]
+  where
+    -- paste zeroes
+    pz i = replicate i False
+    r = length g - 1
+    k = n - r

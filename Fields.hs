@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DefaultSignatures          #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -37,6 +38,7 @@ module Fields
     , FinPoly (..)
     , mkFinPoly
     , isPrimePoly
+    , PrimePoly
     , representBack
     , remakeFinPoly
 
@@ -54,7 +56,7 @@ import           Data.List    (nub, (!!))
 -- Rings
 ----------------------------------------------------------------------------
 
-class Ring a where
+class Eq a => Ring a where
     f0 :: a
     (<+>) :: a -> a -> a
     fneg :: a -> a
@@ -96,6 +98,14 @@ class Ring a => Field a where
     getGen :: a
     -- ^ Generator
     getFieldSize :: Proxy a -> Integer
+    -- ^ Field size
+
+    default getFieldSize :: Proxy a -> Integer
+    getFieldSize _ =
+        let (g :: a) = getGen
+            genPowers = iterate (\(i,x) -> (i+1,g <*> x)) (1,g)
+        -- f0 + powers
+        in 1 + fst (unsafeHead $ dropWhile ((/= f1) . snd) genPowers)
 
 ----------------------------------------------------------------------------
 -- Integer ring/field
@@ -138,7 +148,7 @@ instance (KnownNat n) => Ring (Z n) where
     (Z a) <*> (Z b) = toZ $ a * b
 
 -- | Naive search for any group generator.
-findGenerator :: forall a. (Show a, Field a, Eq a) => [a] -> a
+findGenerator :: forall a. (Show a, Field a) => [a] -> a
 findGenerator elems =
     fromMaybe (error "Couldn't find generator!") $
     find (\g -> let s = genOrderSet [] g g in length s == n - 1) $ filter (/= f0) elems
@@ -165,14 +175,14 @@ instance Show a => Show (Poly a) where
     show (Poly l) = "Poly " ++ show l
 
 -- Removes zeroes from the beginning
-stripZ :: (Eq a, Ring a) => Poly a -> Poly a
+stripZ :: (Ring a) => Poly a -> Poly a
 stripZ (Poly []) = Poly [f0]
 stripZ r@(Poly [_]) = r
 stripZ (Poly xs) =
     let l' = take (length xs - 1) xs
     in Poly $ dropWhile (== f0) l' ++ [unsafeLast xs]
 
-prettyPoly :: forall a . (Show a, Eq a, Ring a) => Poly a -> String
+prettyPoly :: forall a . (Show a, Ring a) => Poly a -> String
 prettyPoly (stripZ -> (Poly p)) =
     intercalate " + " $
     map mapFoo $
@@ -186,10 +196,10 @@ prettyPoly (stripZ -> (Poly p)) =
     mapFoo (n,1) = show n ++ "x"
     mapFoo (n,i) = show n ++ "x^" ++ show i
 
-instance (Eq a, Ring a) => Eq (Poly a) where
+instance (Ring a) => Eq (Poly a) where
     (==) (stripZ -> (Poly p1)) (stripZ -> (Poly p2)) = p1 == p2
 
-deg ::  (Eq a, Ring a, Integral n) => Poly a -> n
+deg ::  (Ring a, Integral n) => Poly a -> n
 deg (stripZ -> (Poly p)) = fromIntegral $ length p - 1
 
 
@@ -202,7 +212,7 @@ zip0 p1 p2 = uncurry zip sameSize
     diff = length (snd shortest) - length (fst shortest)
     sameSize = shortest & _1 %~ ((replicate diff f0) ++)
 
-instance (Eq a, Ring a) => Ring (Poly a) where
+instance (Ring a) => Ring (Poly a) where
     f0 = Poly [f0]
     f1 = Poly [f1]
     fneg = fmap fneg
@@ -243,7 +253,7 @@ assert :: Bool -> Text -> a -> a
 assert b str action = bool (error str) action b
 
 -- | a / b = (quotient,remainder)
-euclPoly :: (Eq a, Field a) => Poly a -> Poly a -> (Poly a, Poly a)
+euclPoly :: (Field a) => Poly a -> Poly a -> (Poly a, Poly a)
 euclPoly (stripZ -> a) (stripZ -> b@(Poly bPoly)) =
     let res@(q,r) = euclPolyGo f0 a
     in assert ((b <*> q) <+> r == a) "EuclPoly assert failed" res
@@ -260,10 +270,10 @@ euclPoly (stripZ -> a) (stripZ -> b@(Poly bPoly)) =
             r' = r <-> (x <*> b)
         in euclPolyGo q' r'
 
-instance (Field a, Eq a) => Euclidian (Poly a) where
+instance (Field a) => Euclidian (Poly a) where
     (</>) = euclPoly
 
-gcdEucl :: (Eq a, Euclidian a) => a -> a -> a
+gcdEucl :: (Euclidian a) => a -> a -> a
 gcdEucl a b =
     let res = gcdEuclGo a b
     in assert (snd (a </> res) == f0) "gcd doesn't divide a" $
@@ -342,15 +352,15 @@ instance (PrimeNat n, KnownNat p, Ring (Poly (Z n))) =>
 instance (PrimeNat n, KnownNat p) => Euclidian (FinPoly p (Z n)) where
     (</>) (FinPoly p1) (FinPoly p2) = let (q,r) = p1 </> p2 in (mkFinPoly q, mkFinPoly r)
 
-class PrimePoly (n :: Nat) (p :: Nat) where
+class PrimePoly (p :: Nat) (n :: Nat) where
 
--- 19 = x^4 + x + 1 is prime poly in F_2
-instance PrimePoly 2 19
--- 75 = x^6 + x^3 + x + 1
-instance PrimePoly 2 75
---instance PrimePoly 1 19
+-- 19 = x^4 + x + 1 is prime poly over F_2
+instance PrimePoly 19 2
+-- 67 = x^6 + x + 1 is prime poly over F_2
+instance PrimePoly 67 2
+-- 75 = x^6 + x^3 + x + 1 is NOT prime
 
-instance (Ring (FinPoly p (Z n)), PrimePoly n p, PrimeNat n, KnownNat p)
+instance (Ring (FinPoly p (Z n)), PrimePoly p n, PrimeNat n, KnownNat p)
          => Field (FinPoly p (Z n)) where
     finv (FinPoly f) =
         mkFinPoly $ f <^> (getFieldSize (Proxy @(FinPoly p (Z n))) - 2)
@@ -383,7 +393,7 @@ data Matrix a = Matrix [[a]] deriving Show
 
 -- | You pass linear system [A|b], where A is n×n and get list of
 -- solutions.
-gaussSolve :: forall a. (Eq a, Field a) => Matrix a -> Matrix a
+gaussSolve :: forall a. (Field a) => Matrix a -> Matrix a
 gaussSolve (Matrix m0)
     | n > m = error "gaussSolve: n > m"
     | otherwise = Matrix $ execState (diagonal1 >> diagonal2) m1
@@ -455,6 +465,7 @@ _testGenerators = do
     print $ take 20 $ iterate (<*> g) g
     print (allFinPolys :: [FinPoly 19 (Z 2)])
     print $ getGen @(FinPoly 19 (Z 2))
+    print $ getFieldSize (Proxy @(FinPoly 19 (Z 2)))
     print $ allFinPolys @75 @2
 
 _testPrimality :: IO ()
@@ -464,12 +475,8 @@ _testPrimality = do
     print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
     print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
     print $ isPrimePoly $ (Poly [1,0,0,0,1,1,1,0,1] :: Poly (Z 2))
-    putText "posos"
+    print $ (Poly (map toZ $ represent 2 67) :: Poly (Z 2))
     print $ isPrimePoly $ (Poly (map toZ $ represent 2 75) :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly (map toZ $ reverse $ represent 2 75) :: Poly (Z 2))
     print $ isPrimePoly $ (Poly (map toZ $ represent 2 57) :: Poly (Z 2))
     print $ isPrimePoly $ (Poly (map toZ $ represent 2 67) :: Poly (Z 2))
     print $ isPrimePoly $ (Poly (map toZ $ represent 2 51) :: Poly (Z 2))
-    let (x :: FinPoly 105 (Z 2)) = mkFinPoly $ Poly [1,1]
-    forM_ [1..15] $ \(i :: Integer) -> print i >> print (x <^> i)
-    print $ getGen @(FinPoly 75 (Z 2))
