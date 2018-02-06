@@ -46,11 +46,10 @@ module Fields
     ) where
 
 import qualified Prelude
-import           Universum    hiding ((<*>))
-import           Unsafe       (unsafeHead, unsafeLast)
+import           Universum    hiding (head, last, (<*>))
 
 import           Control.Lens (ix, (%=), (.=))
-import           Data.List    (nub, (!!))
+import           Data.List    (head, last, nub, (!!))
 
 ----------------------------------------------------------------------------
 -- Rings
@@ -105,11 +104,14 @@ class Ring a => Field a where
         let (g :: a) = getGen
             genPowers = iterate (\(i,x) -> (i+1,g <*> x)) (1,g)
         -- f0 + powers
-        in 1 + fst (unsafeHead $ dropWhile ((/= f1) . snd) genPowers)
+        in 1 + fst (head $ dropWhile ((/= f1) . snd) genPowers)
 
 ----------------------------------------------------------------------------
 -- Integer ring/field
 ----------------------------------------------------------------------------
+
+natValI :: forall n. KnownNat n =>  Integer
+natValI = toInteger $ natVal (Proxy @n)
 
 -- Z/nZ
 newtype Z (a :: Nat) = Z { unZ :: Integer } deriving (Num, Eq, Ord, Enum, Real, Integral)
@@ -118,7 +120,7 @@ instance Show (Z a) where
     show (Z i) = show i
 
 toZ :: forall n . (KnownNat n) => Integer -> Z n
-toZ i = Z $ i `mod` (natVal (Proxy :: Proxy n))
+toZ i = Z $ i `mod` (natValI @n)
 
 class KnownNat n => PrimeNat (n :: Nat)
 
@@ -144,7 +146,7 @@ instance (KnownNat n) => Ring (Z n) where
     (Z a) <+> (Z b) = toZ $ a + b
     f1 = Z 1
     fneg (Z 0) = Z 0
-    fneg (Z i) = toZ $ natVal (Proxy :: Proxy n) - i
+    fneg (Z i) = toZ $ natValI @n - i
     (Z a) <*> (Z b) = toZ $ a * b
 
 -- | Naive search for any group generator.
@@ -159,9 +161,9 @@ findGenerator elems =
                          | otherwise = genOrderSet (g:acc) g0 (g <*> g0)
 
 instance (PrimeNat n) => Field (Z n) where
-    finv (Z a) = toZ $ a `fastExp` (natVal (Proxy :: Proxy n) - 2)
-    getGen = findGenerator $ map toZ [0..(natVal (Proxy :: Proxy n) - 1)]
-    getFieldSize _ = natVal (Proxy :: Proxy n)
+    finv (Z a) = toZ $ a `fastExp` (natValI @n - 2)
+    getGen = findGenerator $ map toZ [0..(natValI @n - 1)]
+    getFieldSize _ = natValI @n
 
 ----------------------------------------------------------------------------
 -- Polynomials
@@ -180,7 +182,7 @@ stripZ (Poly []) = Poly [f0]
 stripZ r@(Poly [_]) = r
 stripZ (Poly xs) =
     let l' = take (length xs - 1) xs
-    in Poly $ dropWhile (== f0) l' ++ [unsafeLast xs]
+    in Poly $ dropWhile (== f0) l' ++ [last xs]
 
 prettyPoly :: forall a . (Show a, Ring a) => Poly a -> String
 prettyPoly (stripZ -> (Poly p)) =
@@ -219,12 +221,17 @@ instance (Ring a) => Ring (Poly a) where
     (Poly p1) <+> (Poly p2) =
         stripZ $ Poly $ map (uncurry (<+>)) $ zip0 p1 p2
     lhs@(Poly p1) <*> rhs@(Poly p2) =
-        let acc0 = replicate ((deg lhs + deg rhs)+1) f0
+        let acc0 :: [a]
+            acc0 = replicate ((deg lhs + deg rhs)+1) f0
+            withIndex :: [a] -> [(a,Int)]
+            withIndex a = reverse $ reverse a `zip` [0..]
+
+            foldFooSub :: [a] -> ((a,Int),(a,Int)) -> [a]
             foldFooSub acc ((e1,d1), (e2,d2)) =
                 acc & ix (d1 + d2) %~ (<+> (e1 <*> e2))
+            foldFoo :: [a] -> ((a,Int),[a]) -> [a]
             foldFoo acc ((e1,d1),el2) =
                 foldl' foldFooSub acc $ map ((e1,d1),) $ withIndex el2
-            withIndex a = reverse $ reverse a `zip` [0..]
         in stripZ . Poly $ reverse $ foldl' foldFoo acc0 $ map (,p2) $ withIndex p1
 
 ----------------------------------------------------------------------------
@@ -246,7 +253,7 @@ instance Euclidian Integer where
 
 instance KnownNat n => Euclidian (Z n) where
     (</>) (Z a) (Z b) =
-        let wrap = (Z . (`mod` natVal (Proxy :: Proxy n)))
+        let wrap = (Z . (`mod` natValI @n))
         in bimap wrap wrap (a `div` b, a `mod` b)
 
 assert :: Bool -> Text -> a -> a
@@ -304,7 +311,7 @@ representBack b poly = go 1 $ reverse poly
     go i (x:xs) = (i * x) + go (i * b) xs
 
 reflectCoeffPoly :: forall p n. (KnownNat n, KnownNat p) => Poly Integer
-reflectCoeffPoly = Poly $ represent (natVal $ Proxy @n) (natVal $ Proxy @p)
+reflectCoeffPoly = Poly $ represent (natValI @n) (natValI @p)
 
 getCoeffPoly :: forall p n. (KnownNat p, KnownNat n) => Poly (Z n)
 getCoeffPoly = map toZ (reflectCoeffPoly @p @n)
@@ -319,7 +326,7 @@ allFinPolys :: forall p n. (KnownNat p, KnownNat n) => [FinPoly p (Z n)]
 allFinPolys = map (FinPoly . stripZ . Poly . (map toZ)) $ binGen s
   where
     b :: Integer
-    b = fromIntegral $ natVal (Proxy @n)
+    b = fromIntegral $ natValI @n
     s :: Integer
     s = deg (reflectCoeffPoly @p @n)
     binGen :: Integer -> [[Integer]]
@@ -330,9 +337,9 @@ allFinPolys = map (FinPoly . stripZ . Poly . (map toZ)) $ binGen s
 
 isPrimePoly :: forall n . (KnownNat n, Euclidian (Poly (Z n))) => Poly (Z n) -> Bool
 isPrimePoly p@(Poly pP) =
-    let i = representBack (natVal $ Proxy @n) (map unZ pP)
+    let i = representBack (natValI @n) (map unZ pP)
         lesspolys :: [Poly (Z n)]
-        lesspolys = map (Poly . map toZ . represent (natVal $ Proxy @n)) [2..(i-1)]
+        lesspolys = map (Poly . map toZ . represent (natValI @n)) [2..(i-1)]
     in all (\pl -> p `eMod` pl /= f0) lesspolys
 
 mkFinPoly :: forall p n . (KnownNat p, PrimeNat n) => Poly (Z n) -> FinPoly p (Z n)
@@ -367,7 +374,7 @@ instance (Ring (FinPoly p (Z n)), PrimePoly p n, PrimeNat n, KnownNat p)
     getGen = findGenerator allFinPolys
     getFieldSize _ = do
         let b :: Integer
-            b = fromIntegral $ natVal (Proxy @n)
+            b = fromIntegral $ natValI @n
         let s :: Integer
             s = deg (reflectCoeffPoly @p @n)
         (b ^ s)
@@ -403,7 +410,7 @@ gaussSolve (Matrix m0)
                  pure $ x !! j
 
     n = length m0
-    m = length $ unsafeHead m0
+    m = length $ head m0
 
     diagonal1 :: State [[a]] ()
     diagonal1 = forM_ [0..(n-1)] $ \(i::Int) -> do

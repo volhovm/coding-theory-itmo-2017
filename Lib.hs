@@ -20,14 +20,12 @@ module Lib
     ) where
 
 
-import           Nub               (ordNub)
 import qualified Prelude
-import           Universum         hiding (transpose, (<*>))
-import           Unsafe            (unsafeHead, unsafeLast)
+import           Universum         hiding (head, last, transpose, (<*>))
 
 import           Control.Lens      (at, ix, (?=))
 import qualified Data.HashSet      as HS
-import           Data.List         (findIndex, (!!))
+import           Data.List         (findIndex, head, last, (!!))
 import           Data.Map.Strict   ((!))
 import qualified Data.Map.Strict   as M
 import           GHC.Conc          (par)
@@ -129,7 +127,7 @@ scalar a b =
 transpose :: [[a]] -> [[a]]
 transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
   where
-    n = length (unsafeHead m1)
+    n = length (head m1)
 
 vMulM :: BVector -> BMatrix -> BVector
 vMulM v m = map (scalar v) m
@@ -152,10 +150,10 @@ linearDependentSubset d vectors
     | any (== zero) vectors = True
     | otherwise = or $ map ((== zero) . sumAll) ps
   where
-    n = length $ unsafeHead vectors
+    n = length $ head vectors
     zero = replicate n False
     sumAll :: [BVector] -> BVector
-    sumAll = foldr sumBVectors $ replicate (length $ unsafeHead vectors) False
+    sumAll = foldr sumBVectors $ replicate (length $ head vectors) False
     ps :: [[BVector]]
     ps = concatMap (flip combinations vectors) [1..(min d (fromIntegral $ length vectors))]
 
@@ -171,7 +169,7 @@ distance matrix =
   where
     hasDistance :: Integer -> Bool
     hasDistance i = not (linearDependentSubset i matrix)
-    n = length (unsafeHead matrix)
+    n = length (head matrix)
     k = length matrix
     maxRank :: Integer
     maxRank = toInteger $ min n k
@@ -205,13 +203,13 @@ codeH h = filter (\y -> y `vMulM` (transpose h) == replicate r False)
                  (binaryVectors n)
   where
     n = length h
-    r = length (unsafeHead h)
+    r = length (head h)
 
 -- | Get all code words from G.
 codeG :: [BVector] -> [BVector]
 codeG g = map (`vMulM` g) $ binaryVectors k
   where
-    k = length (unsafeHead g)
+    k = length (head g)
 
 -- | Given matrix H, returns (r,v1,v2) -- code radius r, vector v1
 -- (not in code).
@@ -280,7 +278,7 @@ buildZeroNN h =
     -- Calculates closest neighborhood by solving area
     neighborhood :: [BVector] -> [BVector]
     neighborhood sA = filter (\x -> x `notElem` sA && invertedIn x)
-                              (binaryVectors (length $ unsafeHead sA))
+                              (binaryVectors (length $ head sA))
       where
         invertedIn x =
             let invertedSet =
@@ -322,7 +320,7 @@ findGfromH h =
 
     allPossibleG = combinations (fromIntegral n) $ binaryVectors k
     n = length h
-    r = length $ unsafeHead h
+    r = length $ head h
     k = n - r
 
 hamming74H = drop 1 $ binaryVectors (3 :: Int)
@@ -403,7 +401,7 @@ h23Dimq =
 findDRange :: Integer -> Integer -> (Integer,Integer)
 findDRange n k = (lastB hammingCond [1..n], lastB gilbertVarshamovCond [1..n])
   where
-    lastB cond = unsafeLast . takeWhile cond
+    lastB cond = last . takeWhile cond
     cast :: (Integral a, Num b) => a -> b
     cast = fromIntegral
     hammingCond :: Integer -> Bool
@@ -606,7 +604,7 @@ buildSyndromLattice h =
     --reverse $ rawLattice 0 [[(zSyndrome, mempty)]]
   where
     n = length h
-    r = length $ unsafeHead h
+    r = length $ head h
     zSyndrome = replicate r False
 
     -- From two lists, creates function a -> i which tells that element a
@@ -669,7 +667,7 @@ instance Show LrosGen where
 
 emulateLros :: LrosGen -> [Bool]
 emulateLros (LrosGen coeffs st) = do
-    let curOut = unsafeLast st
+    let curOut = last st
     let pr = scalar coeffs st
     let newst = take (length st) $ pr : st
     curOut : emulateLros (LrosGen coeffs newst)
