@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE NoImplicitPrelude   #-}
 {-# LANGUAGE TypeApplications    #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -711,33 +712,48 @@ cyclotomicClasses = go [[0]] 0
            else go (map (`mod` (fsize - 1)) newX:s) (gi+1)
     fsize = getFieldSize (Proxy @a)
 
-matchCyclotomic :: [[Integer]] -> Integer -> [[Integer]]
-matchCyclotomic classes d =
-    fromMaybe (error "mda") $
-    find (\comb -> [1..d] `isPrefixOf` sort (ordNub (concat comb))) $
+matchCyclotomic :: [[Integer]] -> Integer -> ([[Integer]], (Integer,Integer))
+matchCyclotomic classes (fromIntegral -> d) =
+    head $
+    mapMaybe (\comb -> (comb,) <$> toMatch (ordNub $ concat comb)) $
     allCombinations classes
+  where
+    -- Tries to find d-1 consequent elems in the list
+    toMatch :: [Integer] -> Maybe (Integer, Integer)
+    toMatch (sort -> l) =
+        let f [] i       = [i]
+            f xs@(x:_) i | i == x + 1 = i:xs
+                         | length xs >= (d - 1) = xs
+                         | otherwise  = [i]
+            res = reverse $ foldl' f [] l
+        in guard (length res >= (d-1)) >> pure (head res, last res)
 
 minFromCyclotomic ::
-       forall p n. (PrimeNat n, KnownNat p, Field (FinPoly p (Z n)))
+       forall p n. (PrimePoly p n)
     => [Integer]
     -> FinPoly p (Z n)
 minFromCyclotomic ccl =
     foldr1 (<*>) $ map (\i -> mkFinPoly (Poly [1, 0]) <-> (getGen <^> i)) ccl
 
-type MishFinPoly = (FinPoly 67 (Z 2))
+type MishFinPoly = FinPoly 67 (Z 2)
+
+data BCHParams (p :: Nat) (n :: Nat) = BCHParams
+    { bchMs   :: [FinPoly p (Z n)]
+    , bchPoly :: FinPoly p (Z n)
+    , bchPows :: (Integer, Integer)
+    } deriving Show
 
 -- | Finds minimal polynomials forming BCH generator.
-buildBCH :: forall p n . (PrimePoly p n, KnownNat p, PrimeNat n) => Integer -> [FinPoly p (Z n)]
+buildBCH :: forall p n . PrimePoly p n => Integer -> BCHParams p n
 buildBCH d =
     let ccl = cyclotomicClasses @(FinPoly p (Z n))
-        (cclChosen :: [[Integer]]) = matchCyclotomic ccl d
-    in map (minFromCyclotomic @p @n) cclChosen
-
-tao :: IO ()
-tao = print $ buildBCH @67 @2 7
+        (cclChosen, bchPows) = matchCyclotomic ccl d
+        bchMs = map (minFromCyclotomic @p @n) cclChosen
+        bchPoly = foldl1 (<*>) bchMs
+    in BCHParams{..}
 
 -- | Encoding in cyclic codes is just multiplying by generator.
-bchEncode :: (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> [Z n] -> FinPoly p (Z n)
+bchEncode :: PrimePoly p n => FinPoly p (Z n) -> [Z n] -> FinPoly p (Z n)
 bchEncode g m = g <*> (mkFinPoly $ Poly $ reverse m)
 
 -- | Creates generator matrix from cyclic code generator polynomial.
@@ -749,3 +765,11 @@ cyclicToG (fromIntegral -> n) g =
     pz i = replicate i False
     r = length g - 1
     k = n - r
+
+task76 :: IO ()
+task76 = print $ buildBCH @67 @2 7
+
+-- | You pass
+decodePGZ :: forall p n. PrimePoly p n => FinPoly p (Z n) -> BVector -> BVector
+decodePGZ = do
+    undefined

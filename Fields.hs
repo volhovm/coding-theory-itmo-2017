@@ -38,6 +38,7 @@ module Fields
     , FinPoly (..)
     , mkFinPoly
     , isPrimePoly
+    , FinPolyNats
     , PrimePoly
     , representBack
     , remakeFinPoly
@@ -348,18 +349,19 @@ mkFinPoly x = FinPoly $ (stripZ x) `eMod` getCoeffPoly @p
 remakeFinPoly :: forall p n . (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> FinPoly p (Z n)
 remakeFinPoly (FinPoly x) = mkFinPoly x
 
-instance (PrimeNat n, KnownNat p, Ring (Poly (Z n))) =>
-         Ring (FinPoly p (Z n)) where
+type FinPolyNats p n = (KnownNat p, PrimeNat n)
+
+instance (FinPolyNats p n) => Ring (FinPoly p (Z n)) where
     f0 = mkFinPoly f0
     (<+>) (FinPoly p1) (FinPoly p2) = mkFinPoly (p1 <+> p2)
     fneg (FinPoly p1) = mkFinPoly $ (getCoeffPoly @p) <-> p1
     f1 = mkFinPoly f1
     (<*>) (FinPoly p1) (FinPoly p2) = mkFinPoly (p1 <*> p2)
 
-instance (PrimeNat n, KnownNat p) => Euclidian (FinPoly p (Z n)) where
+instance FinPolyNats p n => Euclidian (FinPoly p (Z n)) where
     (</>) (FinPoly p1) (FinPoly p2) = let (q,r) = p1 </> p2 in (mkFinPoly q, mkFinPoly r)
 
-class PrimePoly (p :: Nat) (n :: Nat) where
+class FinPolyNats p n => PrimePoly (p :: Nat) (n :: Nat) where
 
 -- 19 = x^4 + x + 1 is prime poly over F_2
 instance PrimePoly 19 2
@@ -367,8 +369,7 @@ instance PrimePoly 19 2
 instance PrimePoly 67 2
 -- 75 = x^6 + x^3 + x + 1 is NOT prime
 
-instance (Ring (FinPoly p (Z n)), PrimePoly p n, PrimeNat n, KnownNat p)
-         => Field (FinPoly p (Z n)) where
+instance (PrimePoly p n) => Field (FinPoly p (Z n)) where
     finv (FinPoly f) =
         mkFinPoly $ f <^> (getFieldSize (Proxy @(FinPoly p (Z n))) - 2)
     getGen = findGenerator allFinPolys
