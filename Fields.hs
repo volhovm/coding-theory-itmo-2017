@@ -35,7 +35,9 @@ module Fields
     , Poly(..)
     , prettyPoly
     , deg
+    , applyPoly
     , FinPoly (..)
+    , reflectCoeffPoly
     , mkFinPoly
     , isPrimePoly
     , FinPolyNats
@@ -43,14 +45,18 @@ module Fields
     , representBack
     , remakeFinPoly
 
+    , Matrix(..)
+    , msize
+    , determinant
     , gaussSolve
+    , gaussSolveSystem
     ) where
 
 import qualified Prelude
-import           Universum    hiding (head, last, (<*>))
+import Universum hiding (head, last, (<*>))
 
-import           Control.Lens (ix, (%=), (.=))
-import           Data.List    (head, last, nub, (!!))
+import Control.Lens (ix, (%=), (.=))
+import Data.List (head, last, nub, (!!))
 
 ----------------------------------------------------------------------------
 -- Rings
@@ -172,7 +178,7 @@ instance (PrimeNat n) => Field (Z n) where
 
 -- | Empty polynomial is equivalent to [0]. Big endian (head is higher
 -- degree coefficient).
-newtype Poly a = Poly [a] deriving (Functor)
+newtype Poly a = Poly { unPoly :: [a] } deriving (Functor)
 
 instance Show a => Show (Poly a) where
     show (Poly l) = "Poly " ++ show l
@@ -205,6 +211,11 @@ instance (Ring a) => Eq (Poly a) where
 deg ::  (Ring a, Integral n) => Poly a -> n
 deg (stripZ -> (Poly p)) = fromIntegral $ length p - 1
 
+applyPoly :: (Field a) => Poly a -> a -> a
+applyPoly (stripZ -> (Poly p)) v =
+    foldr (<+>) f0 $
+        map (\(b,i) -> b <*> (v <^> (i::Int)))
+            (reverse p `zip` [0..])
 
 -- Zips two lists adding zeroes to end of the shortest one
 zip0 :: (Ring a) => [a] -> [a] -> [(a,a)]
@@ -318,7 +329,7 @@ getCoeffPoly :: forall p n. (KnownNat p, KnownNat n) => Poly (Z n)
 getCoeffPoly = map toZ (reflectCoeffPoly @p @n)
 
 -- Empty polynomial is equivalent for [0]. Head -- higher degree.
-newtype FinPoly p a = FinPoly (Poly a) deriving Eq
+newtype FinPoly p a = FinPoly { unFinPoly :: (Poly a) } deriving Eq
 
 instance (Show a) => Show (FinPoly p a) where
     show (FinPoly x) = "Fin" <> show x
@@ -397,7 +408,28 @@ _testFinPolys = do
 ----------------------------------------------------------------------------
 
 -- | Row dominated matrix
-data Matrix a = Matrix [[a]] deriving Show
+data Matrix a = Matrix { unMatrix :: [[a]] } deriving Show
+
+-- | Matrix (n,m) size.
+msize :: Matrix a -> (Int,Int)
+msize (Matrix l) = (length l, length (head l))
+
+-- | Matrix minor.
+minor :: Matrix a -> Int -> Int -> Matrix a
+minor (Matrix rows) i j = Matrix $ map (dropAround j) $ dropAround i rows
+  where
+    dropAround 0 l = drop 1 l
+    dropAround k l | k == length l - 1 = take (length l - 1) l
+    dropAround k l = take k l <> drop (k+1) l
+
+-- | Matrix's determinant. Works only for square matrices.
+determinant :: Ring a => Matrix a -> a
+determinant (Matrix s) | length s /= length (head s) = error "determinant: matrix is not square"
+determinant (Matrix [[x]]) = x
+determinant m@(Matrix rows) =
+    foldr1 (<+>) $
+    map (\((e,k),i) -> k <*> e <*> determinant (minor m 0 i))
+        ((head rows `zip` cycle [f1,fneg f1]) `zip` [0..])
 
 -- | You pass linear system [A|b], where A is n×n and get list of
 -- solutions.
@@ -455,6 +487,14 @@ gaussSolve (Matrix m0)
 
     m1 :: [[a]]
     m1 = initialSort m0
+
+-- | v * X = y, solves for v
+gaussSolveSystem :: forall a. (Field a) => Matrix a -> [a] -> [a]
+gaussSolveSystem m x = if check then res else error "gaussSolveSystem: failed"
+  where
+    check = and $ map (\(r,v) -> foldr1 (<+>) (map (\(a,b) -> a <*> b) $ zip r res) == v) $ unMatrix m `zip` x
+    m' = Matrix $ map (\(r,v) -> r ++ [v]) $ unMatrix m `zip` x
+    res = map last $ unMatrix $ gaussSolve m'
 
 _testGauss :: IO ()
 _testGauss = print $ gaussSolve m

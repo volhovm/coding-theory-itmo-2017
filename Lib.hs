@@ -22,19 +22,19 @@ module Lib
 
 
 import qualified Prelude
-import           Universum         hiding (head, last, transpose, (<*>))
+import Universum hiding (head, last, transpose, (<*>))
 
-import           Control.Lens      (at, ix, (?=))
-import qualified Data.HashSet      as HS
-import           Data.List         (findIndex, head, last, (!!))
-import           Data.Map.Strict   ((!))
-import qualified Data.Map.Strict   as M
-import           GHC.Conc          (par)
-import           Graphics.EasyPlot
-import           System.IO.Unsafe  (unsafePerformIO)
-import           System.Random
+import Control.Lens (at, ix, (?=))
+import qualified Data.HashSet as HS
+import Data.List (findIndex, head, last, nub, (!!))
+import Data.Map.Strict ((!))
+import qualified Data.Map.Strict as M
+import GHC.Conc (par)
+import Graphics.EasyPlot
+import System.IO.Unsafe (unsafePerformIO)
+import System.Random
 
-import           Fields
+import Fields
 
 ----------------------------------------------------------------------------
 -- Utilities
@@ -53,6 +53,8 @@ randomNormal = randomGaussian 0 1
 
 -- Vertical vector
 type BVector = [Bool]
+
+-- row dominated matrix
 type BMatrix = [BVector]
 
 showVec :: BVector -> String
@@ -131,10 +133,16 @@ transpose m1 = [map (!! i) m1 | i <- [0..(n-1)] ]
     n = length (head m1)
 
 vMulM :: BVector -> BMatrix -> BVector
-vMulM v m = map (scalar v) m
+vMulM v m =
+    if length v /= length m
+    then error "vMulM dimensions"
+    else map (scalar v) (transpose m)
 
 mMulM :: BMatrix -> BMatrix -> BMatrix
-mMulM a b = transpose $ map (`vMulM` b) $ transpose a
+mMulM a b =
+    if length (head a) /= length b
+    then error $ "mMulM dimensions: " <> show (length (head a), length b)
+    else transpose $ map (`vMulM` b) a
 
 isNullM :: BMatrix -> Bool
 isNullM = all (all (== False))
@@ -164,6 +172,15 @@ linearDependent :: [BVector] -> Bool
 linearDependent vectors =
     linearDependentSubset (fromIntegral $ length vectors) vectors
 
+-- | Returns any linearly independent subset of vectors passed.
+linearReduce :: [BVector] -> [BVector]
+linearReduce = foldl' gather []
+  where
+    gather acc x = let acc' = acc++[x]
+                   in if linearDependentSubset (fromIntegral $ length acc') acc'
+                      then acc
+                      else acc'
+
 distance :: [BVector] -> Integer
 distance matrix =
     (+1) $ fromMaybe 0 $ find hasDistance $ reverse [1..maxRank]
@@ -180,7 +197,7 @@ encodeG g x = x `vMulM` g
 
 syndromDecodeBuild :: [BVector] -> Map BVector BVector
 syndromDecodeBuild h = flip execState mempty $ forM_ allEs $ \e -> do
-    let syndrom = e `vMulM` (transpose h)
+    let syndrom = e `vMulM` h
     let updateSyndrom = at syndrom ?= e
     use (at syndrom) >>= \case
         Just x  -> when (weight x > weight e) updateSyndrom
@@ -200,7 +217,7 @@ task26 = syndromDecodeBuild h
 
 -- | Returns complete list of code vectors by H.
 codeH :: [BVector] -> [BVector]
-codeH h = filter (\y -> y `vMulM` (transpose h) == replicate r False)
+codeH h = filter (\y -> y `vMulM` h == replicate r False)
                  (binaryVectors n)
   where
     n = length h
@@ -208,9 +225,9 @@ codeH h = filter (\y -> y `vMulM` (transpose h) == replicate r False)
 
 -- | Get all code words from G.
 codeG :: [BVector] -> [BVector]
-codeG g = map (`vMulM` g) $ binaryVectors k
+codeG g = map (encodeG g) $ binaryVectors k
   where
-    k = length (head g)
+    k = length g
 
 -- | Given matrix H, returns (r,v1,v2) -- code radius r, vector v1
 -- (not in code).
@@ -272,7 +289,7 @@ buildZeroNN h =
     syndromMap = syndromDecodeBuild h
     decode :: BVector -> BVector
     decode y = do
-        let syndrom = y `vMulM` transpose h
+        let syndrom = y `vMulM` h
         let e = syndromMap ! syndrom
         y `sumBVectors` e
 
@@ -311,23 +328,51 @@ task215 =
 checkGH :: BMatrix -> BMatrix -> Bool
 checkGH g h = isNullM $ g `mMulM` transpose h
 
--- | Finds g given h.
-findGfromH :: [BVector] -> [BVector]
-findGfromH h =
-    fromMaybe (error "can't happen2") $
-    find (\g -> formsBasis g && checkGH g h) allPossibleG
-  where
-    formsBasis g = not $ linearDependent $ transpose g
+---- | Finds g given h.
+--findGfromH :: [BVector] -> [BVector]
+--findGfromH h =
+--    fromMaybe (error "can't happen2") $
+--    find (\g -> formsBasis g && checkGH g h) allPossibleG
+--  where
+--    formsBasis g = not $ linearDependent $ transpose g
+--
+--    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
+--    n = length h
+--    r = length $ head h
+--    k = n - r
 
-    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
-    n = length h
-    r = length $ head h
-    k = n - r
+boolToZ = map (map (bool (Z 0) (Z 1)))
+zToBool = let x (Z 0) = False
+              x (Z 1) = True
+          in map (map x)
 
-hamming74H = drop 1 $ binaryVectors (3 :: Int)
-hamming74G = findGfromH hamming74H
-hammingE84H = map (++ [True]) $ binaryVectors (3 :: Int)
-hammingE84G = findGfromH hammingE84H
+gToHGauss :: BMatrix -> BMatrix
+gToHGauss (boolToZ -> (g :: [[Z 2]])) =
+    let (gk, gn) = msize (Matrix g)
+        g' = unMatrix $ gaussSolve $ Matrix g
+        p = map (drop gk) g'
+        r = gn - gk
+        zeroes i = replicate (fromIntegral i) f0
+        h = map (\(row,i) -> row <> zeroes i <> [f1] <> zeroes (r-i-1))
+                (transpose p `zip` [0..])
+    in zToBool h
+
+hToGGauss :: BMatrix -> BMatrix
+hToGGauss (boolToZ -> (h :: [[Z 2]])) =
+    let (hr, hn) = msize (Matrix h)
+        h' = map (\r -> drop (fromIntegral $ hn-hr) r <> take (fromIntegral $ hn-hr) r) h
+        h'' = unMatrix $ gaussSolve $ Matrix h'
+        p = map (drop hr) h''
+        k = hn - hr
+        zeroes i = replicate (fromIntegral i) f0
+        g = map (\(row,i) -> zeroes i <> [f1] <> zeroes (k-i-1) <> row)
+                (transpose p `zip` [0..])
+    in zToBool g
+
+hamming74H = transpose $ drop 1 $ binaryVectors (3 :: Int)
+hamming74G = hToGGauss hamming74H
+hammingE84H = transpose $ map (++ [True]) $ binaryVectors (3 :: Int)
+hammingE84G = hToGGauss hammingE84H
 
 task216 :: IO ()
 task216 = do
@@ -346,6 +391,7 @@ task216 = do
 -- | Chapter 2 task 3 - individual task matrix G.
 g23 :: BMatrix
 g23 =
+    transpose $
     map fromIntVector $
     [ [1, 0, 0, 0, 0, 0]
     , [0, 1, 0, 0, 0, 0]
@@ -362,6 +408,7 @@ g23 =
 -- | Dual H matrix.
 h23 :: BMatrix
 h23 =
+    transpose $
     map fromIntVector $
     [ [1, 1, 1, 0]
     , [1, 1, 1, 1]
@@ -377,7 +424,7 @@ h23 =
 
 g23Dimq :: BMatrix
 g23Dimq =
-    map fromIntVector $ transpose
+    map fromIntVector $
     [ [1, 0, 0, 0, 0, 0, 1, 1, 1, 1]
     , [0, 1, 0, 0, 0, 0, 1, 1, 1, 0]
     , [0, 0, 1, 0, 0, 0, 0, 1, 0, 1]
@@ -388,12 +435,21 @@ g23Dimq =
 
 h23Dimq :: BMatrix
 h23Dimq =
-    map fromIntVector $ transpose
+    map fromIntVector $
     [ [1, 1, 0, 0, 1, 1, 1, 0, 0, 0]
     , [1, 1, 1, 1, 1, 0, 0, 1, 0, 0]
     , [1, 1, 0, 1, 0, 1, 0, 0, 1, 0]
     , [1, 0, 1, 0, 0, 0, 0, 0, 0, 1]
     ]
+
+_testGH :: IO ()
+_testGH = do
+    print $ checkGH g23 h23
+    let h' = gToHGauss g23
+    print $ checkGH g23 h'
+    let g' = hToGGauss h23Dimq
+    print $ checkGH g' h23Dimq
+    print $ checkGH g23Dimq h23Dimq
 
 ----------------------------------------------------------------------------
 -- Part 3
@@ -699,8 +755,14 @@ task71 = do
 -- 7.6 BCH
 ----------------------------------------------------------------------------
 
+{-
+Great presentation on bch codes:
+https://web.stanford.edu/class/ee387/handouts/notes19.pdf
+-}
+
+
 cyclotomicClasses :: forall a . (Eq a,Field a) => [[Integer]]
-cyclotomicClasses = go [[0]] 0
+cyclotomicClasses = sort $ go [[0]] 0
   where
     go :: [[Integer]] -> Integer -> [[Integer]]
     go s gi | gi >= fsize - 1 = s
@@ -712,15 +774,28 @@ cyclotomicClasses = go [[0]] 0
            else go (map (`mod` (fsize - 1)) newX:s) (gi+1)
     fsize = getFieldSize (Proxy @a)
 
+-- | First argument -- list of cyclotomic classes and desired
+-- d. Return value is cyclotomic classes that create the match. It
+-- returns the minumum number of classes required to match.
 matchCyclotomic :: [[Integer]] -> Integer -> ([[Integer]], (Integer,Integer))
 matchCyclotomic classes (fromIntegral -> d) =
     head $
-    mapMaybe (\comb -> (comb,) <$> toMatch (ordNub $ concat comb)) $
+    mapMaybe (\comb -> (comb,) <$> toMatchSimple (ordNub $ concat comb)) $
     allCombinations classes
   where
-    -- Tries to find d-1 consequent elems in the list
-    toMatch :: [Integer] -> Maybe (Integer, Integer)
-    toMatch (sort -> l) =
+    -- PGZ is only explained when consequent cyclotomic powers are [0..d],
+    -- so b = 0. So this is a simplified version of toMatch.
+    --
+    -- In other words, we only consider narrow-sense BCH codes
+    toMatchSimple :: [Integer] -> Maybe (Integer, Integer)
+    toMatchSimple (sort -> l) =
+        let l' = take (d-1) l
+        in if l' `isPrefixOf` [1..] && (length l' == d-1)
+        then Just (1, fromIntegral d-1) else Nothing
+
+     -- Tries to find d-1 consequent elems in the list
+    _toMatch :: [Integer] -> Maybe (Integer, Integer)
+    _toMatch (sort -> l) =
         let f [] i       = [i]
             f xs@(x:_) i | i == x + 1 = i:xs
                          | length xs >= (d - 1) = xs
@@ -729,32 +804,56 @@ matchCyclotomic classes (fromIntegral -> d) =
         in guard (length res >= (d-1)) >> pure (head res, last res)
 
 minFromCyclotomic ::
-       forall p n. (PrimePoly p n)
+       forall p n. (KnownNat n, PrimePoly p n)
     => [Integer]
-    -> FinPoly p (Z n)
+    -> Poly (FinPoly p (Z n))
 minFromCyclotomic ccl =
-    foldr1 (<*>) $ map (\i -> mkFinPoly (Poly [1, 0]) <-> (getGen <^> i)) ccl
+    let foo i = let y = Poly [g <^> i]
+                in x <-> y
+                  -- if g' == x && i == 1
+                  -- then Poly g'
+                  -- else x <-> Poly [g <^> i] -- FIXME g^i should be in smaller field?
+    in foldr1 (<*>) $ map foo ccl
+  where
+    x = Poly [mkFinPoly (Poly [1]), f0]
+    g = getGen @(FinPoly p (Z n))
 
 type MishFinPoly = FinPoly 67 (Z 2)
 
 data BCHParams (p :: Nat) (n :: Nat) = BCHParams
-    { bchMs   :: [FinPoly p (Z n)]
-    , bchPoly :: FinPoly p (Z n)
-    , bchPows :: (Integer, Integer)
+    { bchMs         :: [Poly (FinPoly p (Z n))]
+    , bchPoly       :: Poly (FinPoly p (Z n))
+    , bchPows       :: (Integer, Integer)
+    , bchD          :: Integer
+    -- Extra info:
+    , bchCyclotomic :: [[Integer]]
     } deriving Show
+
+
+data BCHCode (p :: Nat) = BCHCode
+    { bchN      :: Integer
+    , bchK      :: Integer
+    , bchParams :: BCHParams p 2
+    , bchg      :: Poly (Z 2)
+      -- ^ Generator polynomial
+    , bchG      :: Matrix (Z 2)
+    , bchH      :: Matrix (Z 2)
+    } deriving Show
+
 
 -- | Finds minimal polynomials forming BCH generator.
 buildBCH :: forall p n . PrimePoly p n => Integer -> BCHParams p n
 buildBCH d =
     let ccl = cyclotomicClasses @(FinPoly p (Z n))
-        (cclChosen, bchPows) = matchCyclotomic ccl d
-        bchMs = map (minFromCyclotomic @p @n) cclChosen
-        bchPoly = foldl1 (<*>) bchMs
+        (bchCyclotomic, bchPows) = matchCyclotomic ccl d
+        bchMs = map (minFromCyclotomic @p @n) bchCyclotomic
+        bchPoly = foldl1 (<*>) $ nub bchMs
+        bchD = d
     in BCHParams{..}
 
 -- | Encoding in cyclic codes is just multiplying by generator.
-bchEncode :: PrimePoly p n => FinPoly p (Z n) -> [Z n] -> FinPoly p (Z n)
-bchEncode g m = g <*> (mkFinPoly $ Poly $ reverse m)
+bchEncode :: KnownNat n => Poly (Z n) -> [Z n] -> Poly (Z n)
+bchEncode g m = g <*> (Poly $ reverse m)
 
 -- | Creates generator matrix from cyclic code generator polynomial.
 cyclicToG :: (Integral i) => i -> BVector -> BMatrix
@@ -766,10 +865,151 @@ cyclicToG (fromIntegral -> n) g =
     r = length g - 1
     k = n - r
 
-task76 :: IO ()
-task76 = print $ buildBCH @67 @2 7
+paramsToCode :: forall p. (PrimePoly p 2) => BCHParams p 2 -> Integer -> BCHCode p
+paramsToCode bchParams@BCHParams{..} bchN =
+    traceShow bchH $
+    BCHCode{..}
+  where
+    pContent = reverse $ unPoly bchPoly
+    l :: Integer
+    l = fromIntegral $ length pContent
+    bchK = bchN - l + 1
+    α = getGen @(FinPoly p (Z 2))
+    hoistg :: Poly (FinPoly p (Z 2)) -> Poly (Z 2)
+    hoistg (Poly els) =
+        let hoistFunc :: FinPoly p (Z 2) -> Z 2
+            hoistFunc (FinPoly (Poly [e])) = e
+            hoistFunc _                    = error "hoistg"
+        in Poly $ map hoistFunc els
+    -- H is built as on page 176 formula 6.8
+    bchH =
+        Matrix $
+        boolToZ $ linearReduce $ zToBool $
+        -- transforms list of coefficients to N lists of coefficients
+        -- of sublists
+        --
+        -- e.g. [α^1, α^2, α^4] will turn into
+        -- [ [α^1_1, α^2_1, α^4_1]
+        -- , [α^1_2, α^2_2, α^4_2]
+        -- , ... to power 4 if we work in finite field modulo poly degree 5
+        let expandPowers :: [FinPoly p (Z 2)] -> [[(Z 2)]]
+            expandPowers =
+                transpose .
+                map (\(FinPoly (Poly x)) ->
+                       let s = reverse x
+                           fieldM = length (unPoly $ reflectCoeffPoly @p @2) - 1
+                       in s <> replicate (fieldM - length s) f0)
+        in concatMap (\(b0:_) -> expandPowers $ map ((α <^> b0) <^>) [0..bchN-1])
+                     bchCyclotomic
+    bchG = Matrix $ boolToZ $ hToGGauss $ zToBool $ unMatrix bchH
 
--- | You pass
-decodePGZ :: forall p n. PrimePoly p n => FinPoly p (Z n) -> BVector -> BVector
-decodePGZ = do
+-- | Input is BCH parameters and input word.
+decodePGZ :: forall p. (PrimePoly p 2) => BCHCode p -> BVector -> BVector
+decodePGZ BCHCode{..} c =
+    trace (show slist :: Text) $
+    trace (show ν :: Text) $
+    trace (show mmatrix :: Text) $
+    trace (show locs :: Text) $
+    trace (show xlist :: Text) $
+    trace (show ylist :: Text) $
     undefined
+  where
+    BCHParams{..} = bchParams
+    t = (bchD - 1) `div` 2
+
+    computeΛ m =
+        gaussSolveSystem m $
+        map fneg $ take (fromInteger ν) $ drop (fromInteger ν) slist
+
+    computeM :: Integer -> Matrix (FinPoly p (Z 2))
+    computeM (fromInteger -> μ) =
+        Matrix $ map (\i -> take μ (drop i slist)) [0..μ-1]
+
+    computeErrors i
+        | i == 0 = error "computeErrors"
+        | otherwise =
+            let m = computeM i
+            in if determinant m /= f0
+               then i
+               else computeErrors (i-1)
+
+    ν = computeErrors $ t
+
+    -- M
+    mmatrix = computeM ν
+
+    -- Λ_i
+    locs :: [FinPoly p (Z 2)]
+    locs = computeΛ mmatrix
+
+    -- X_i
+    xlist :: [FinPoly p (Z 2)]
+    xlist = map finv locs
+
+    ylist :: [FinPoly p (Z 2)]
+    ylist =
+        let xmatrix = Matrix $ map (\i -> map (<^> i) xlist) [0..ν-1]
+        in gaussSolveSystem xmatrix (take (fromInteger ν) slist)
+
+    -- input codeword is interpreted as low endian.
+    -- c0 + c1x + c2x^2 + ...
+    -- TODO use applyPoly
+    slistFoo :: FinPoly p (Z 2) -> FinPoly p (Z 2)
+    slistFoo αj =
+        foldr (<+>) f0 $
+        concat $
+        map (\(b,i) -> if b then [αj <^> (i::Int)] else []) (c `zip` [0..])
+
+    slist :: [FinPoly p (Z 2)]
+    slist = map (slistFoo . (α <^>)) [fst bchPows..snd bchPows]
+
+    α = getGen @(FinPoly p (Z 2))
+
+testBCH :: IO ()
+testBCH = do
+    let bch = buildBCH @19 @2 7
+    print bch
+    let bchc = paramsToCode bch 15
+    print bchc
+    --let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
+    --        unMatrix $ bchG bchc
+    --print bchc
+    --print $
+    --    map showVec $
+    --    take 20 $ codeG g
+    --print $ fromStrVec "111001100011011" `elem` codeG g
+    --print $ decodePGZ bchc $ fromStrVec "110001100111011"
+    --print $ decodePGZ bchc $ fromStrVec "111001100011011"
+
+--task76 :: IO ()
+--task76 = do
+--    let bch = buildBCH @67 @2 7
+--    let bchc = paramsToCode bch 10
+--    let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
+--            unMatrix $ bchG bchc
+--    print bchc
+--    print $
+--        map showVec $
+--        take 20 $ codeG g
+--    print $ decodePGZ bchc $ fromStrVec "0010100110"
+
+{-
+
+BCHCode {bchN = 15, bchK = 12,
+bchParams = BCHParams {bchMs = [FinPoly [1,1,0,0],FinPoly [1,0]], bchPoly = FinPoly [1,0,1,1], bchPows = (1,4), bchD = 5, bchCyclotomic = [[3,6,12,9],[1,2,4,8]]},
+bchG = Matrix {unMatrix =
+[[1,1,0,1,0,0,0,0,0,0,0,0,0,0,0]
+,[0,1,1,0,1,0,0,0,0,0,0,0,0,0,0]
+,[0,0,1,1,0,1,0,0,0,0,0,0,0,0,0]
+,[0,0,0,1,1,0,1,0,0,0,0,0,0,0,0]
+,[0,0,0,0,1,1,0,1,0,0,0,0,0,0,0]
+,[0,0,0,0,0,1,1,0,1,0,0,0,0,0,0]
+,[0,0,0,0,0,0,1,1,0,1,0,0,0,0,0]
+,[0,0,0,0,0,0,0,1,1,0,1,0,0,0,0]
+,[0,0,0,0,0,0,0,0,1,1,0,1,0,0,0]
+,[0,0,0,0,0,0,0,0,0,1,1,0,1,0,0]
+,[0,0,0,0,0,0,0,0,0,0,1,1,0,1,0]
+,[0,0,0,0,0,0,0,0,0,0,0,1,1,0,1]]}}
+["000000000000000","000000000001101","000000000011010","000000000010111","000000000110100","000000000111001","000000000101110","000000000100011","000000001101000","000000001100101","000000001110010","000000001111111","000000001011100","000000001010001","000000001000110","000000001001011","000000011010000","000000011011101","000000011001010","000000011000111"]
+
+-}
