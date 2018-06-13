@@ -881,6 +881,7 @@ paramsToCode bchParams@BCHParams{..} bchN =
             hoistFunc (FinPoly (Poly [e])) = e
             hoistFunc _                    = error "hoistg"
         in Poly $ map hoistFunc els
+    bchg = hoistg bchPoly
     -- H is built as on page 176 formula 6.8
     bchH =
         Matrix $
@@ -901,7 +902,12 @@ paramsToCode bchParams@BCHParams{..} bchN =
                        in s <> replicate (fieldM - length s) f0)
         in concatMap (\(b0:_) -> expandPowers $ map ((α <^> b0) <^>) [0..bchN-1])
                      bchCyclotomic
-    bchG = Matrix $ boolToZ $ hToGGauss $ zToBool $ unMatrix bchH
+
+    bchG =
+        let zeroes i = replicate (fromIntegral i) f0
+        in Matrix $ map (\(fromIntegral -> ki) ->
+                           zeroes ki <> (reverse $ unPoly bchg) <> zeroes (bchN - l - ki))
+                        [0..bchK-1]
 
 -- | Input is BCH parameters and input word.
 decodePGZ :: forall p. (PrimePoly p 2) => BCHCode p -> BVector -> BVector
@@ -971,14 +977,14 @@ testBCH = do
     print bch
     let bchc = paramsToCode bch 15
     print bchc
-    --let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
-    --        unMatrix $ bchG bchc
-    --print bchc
-    --print $
-    --    map showVec $
-    --    take 20 $ codeG g
-    --print $ fromStrVec "111001100011011" `elem` codeG g
+    print $ checkGH (zToBool $ unMatrix $ bchG bchc) (zToBool $ unMatrix $ bchH bchc)
+    let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
+            unMatrix $ bchG bchc
+    print $
+        map showVec $
+        take 20 $ codeG g
     --print $ decodePGZ bchc $ fromStrVec "110001100111011"
+    print $ decodePGZ bchc $ fromStrVec "011101100101000"
     --print $ decodePGZ bchc $ fromStrVec "111001100011011"
 
 --task76 :: IO ()
