@@ -26,7 +26,7 @@ import Universum hiding (head, last, transpose, (<*>))
 
 import Control.Lens (at, ix, (?=))
 import qualified Data.HashSet as HS
-import Data.List (findIndex, head, last, nub, (!!))
+import Data.List (elemIndex, findIndex, head, last, nub, (!!))
 import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
 import GHC.Conc (par)
@@ -761,7 +761,7 @@ https://web.stanford.edu/class/ee387/handouts/notes19.pdf
 -}
 
 
-cyclotomicClasses :: forall a . (Eq a,Field a) => [[Integer]]
+cyclotomicClasses :: forall a . (Eq a,FField a) => [[Integer]]
 cyclotomicClasses = sort $ go [[0]] 0
   where
     go :: [[Integer]] -> Integer -> [[Integer]]
@@ -910,66 +910,81 @@ paramsToCode bchParams@BCHParams{..} bchN =
                         [0..bchK-1]
 
 -- | Input is BCH parameters and input word.
-decodePGZ :: forall p. (PrimePoly p 2) => BCHCode p -> BVector -> BVector
+decodePGZ :: forall p. (PrimePoly p 2) => BCHCode p -> BVector -> ([Int],BVector)
 decodePGZ BCHCode{..} c =
-    trace (show slist :: Text) $
-    trace (show ν :: Text) $
-    trace (show mmatrix :: Text) $
-    trace (show locs :: Text) $
-    trace (show xlist :: Text) $
-    trace (show ylist :: Text) $
-    undefined
+--    traceShow (slist) $
+--    traceShow ("nu", ν) $
+--    traceShow ("M", mmatrix) $
+--    traceShow ("locs", locs) $
+--    traceShow ("locPoly", locsPoly) $
+--    traceShow ("locPoly All Elems", allElems @(FinPoly p (Z 2))) $
+--    traceShow ("locPolyRoots", findRoots locsPoly) $
+--    traceShow ("xlist", xlist) $
+--    traceShow ("ylist", ylist) $
+    if all (== f0) slist then ([],c) else (positions, corrected)
   where
+
     BCHParams{..} = bchParams
     t = (bchD - 1) `div` 2
-
-    computeΛ m =
-        gaussSolveSystem m $
-        map fneg $ take (fromInteger ν) $ drop (fromInteger ν) slist
 
     computeM :: Integer -> Matrix (FinPoly p (Z 2))
     computeM (fromInteger -> μ) =
         Matrix $ map (\i -> take μ (drop i slist)) [0..μ-1]
 
     computeErrors i
-        | i == 0 = error "computeErrors"
+        | i == 0 = error "computeErrors: no errors"
         | otherwise =
             let m = computeM i
             in if determinant m /= f0
-               then i
+               then (m, i)
                else computeErrors (i-1)
 
-    ν = computeErrors $ t
-
-    -- M
-    mmatrix = computeM ν
+    -- M, number of errors
+    (mmatrix, ν) = computeErrors t
 
     -- Λ_i
     locs :: [FinPoly p (Z 2)]
-    locs = computeΛ mmatrix
+    locs = gaussSolveSystem mmatrix $
+        map fneg $ take (fromInteger ν) $ drop (fromInteger ν) slist
+
+    locsPoly :: Poly (FinPoly p (Z 2))
+    locsPoly = Poly $ locs <> [f1]
 
     -- X_i
     xlist :: [FinPoly p (Z 2)]
-    xlist = map finv locs
+    xlist = map finv $ findRoots locsPoly
 
     ylist :: [FinPoly p (Z 2)]
     ylist =
-        let xmatrix = Matrix $ map (\i -> map (<^> i) xlist) [0..ν-1]
-        in gaussSolveSystem xmatrix (take (fromInteger ν) slist)
+        let xmatrix = Matrix $ map (\i -> map (<^> i) xlist) [1..ν]
+            scol = (take (fromInteger ν) slist)
+        in traceShow (xmatrix,scol) $
+           gaussSolveSystem xmatrix scol
+
+    positions :: [Int]
+    positions = mapMaybe (`elemIndex` αpowers) xlist
+
+    corrected :: BVector
+    corrected =
+        let switch True  = False
+            switch False = True
+        in foldl (\c' pos -> c' & ix pos %~ switch) c positions
 
     -- input codeword is interpreted as low endian.
     -- c0 + c1x + c2x^2 + ...
-    -- TODO use applyPoly
     slistFoo :: FinPoly p (Z 2) -> FinPoly p (Z 2)
     slistFoo αj =
-        foldr (<+>) f0 $
-        concat $
-        map (\(b,i) -> if b then [αj <^> (i::Int)] else []) (c `zip` [0..])
+        let mkf x = mkFinPoly (Poly [x])
+        in applyPoly (Poly $ map (bool (mkf $ Z 0) (mkf $ Z 1)) $ reverse c) αj
 
     slist :: [FinPoly p (Z 2)]
     slist = map (slistFoo . (α <^>)) [fst bchPows..snd bchPows]
 
     α = getGen @(FinPoly p (Z 2))
+    αpowers =
+        let genPowers = iterate (α <*>) α
+        -- f0 + powers
+        in (dropWhile (/= f1) genPowers)
 
 testBCH :: IO ()
 testBCH = do
@@ -983,9 +998,8 @@ testBCH = do
     print $
         map showVec $
         take 20 $ codeG g
-    --print $ decodePGZ bchc $ fromStrVec "110001100111011"
-    print $ decodePGZ bchc $ fromStrVec "011101100101000"
-    --print $ decodePGZ bchc $ fromStrVec "111001100011011"
+    --print $ decodePGZ bchc $ fromStrVec "000011101100101" -- normal
+    print $ decodePGZ bchc $ fromStrVec "101111101100101"
 
 --task76 :: IO ()
 --task76 = do

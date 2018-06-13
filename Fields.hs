@@ -1,82 +1,80 @@
-{-# LANGUAGE AllowAmbiguousTypes        #-}
-{-# LANGUAGE CPP                        #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DefaultSignatures          #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures             #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeInType                 #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE CPP                 #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DefaultSignatures   #-}
+{-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE MonoLocalBinds      #-}
+{-# LANGUAGE MultiWayIf          #-}
+{-# LANGUAGE TypeInType          #-}
 
--- | Finite fields and stuff.
 
-module Fields
-    ( Ring(..)
-    , (<->)
-    , (<^>)
-    , fastExp
-    , times
-    , Field(..)
-    , Euclidian(..)
-    , eDiv
-    , eMod
+module Fields where
 
-    , gcdEucl
-
-    , Z (..)
-    , toZ
-    , PrimeNat
-    , Poly(..)
-    , prettyPoly
-    , deg
-    , applyPoly
-    , FinPoly (..)
-    , reflectCoeffPoly
-    , mkFinPoly
-    , isPrimePoly
-    , FinPolyNats
-    , PrimePoly
-    , representBack
-    , remakeFinPoly
-
-    , Matrix(..)
-    , msize
-    , determinant
-    , gaussSolve
-    , gaussSolveSystem
-    ) where
 
 import qualified Prelude
 import Universum hiding (head, last, (<*>))
 
 import Control.Lens (ix, (%=), (.=))
-import Data.List (head, last, nub, (!!))
+import Data.List (head, last, (!!))
+import qualified Data.List as L
 
 ----------------------------------------------------------------------------
--- Rings
+-- Typeclasses and misc
 ----------------------------------------------------------------------------
 
-class Eq a => Ring a where
+-- Disclaimer: this hierarchy is not optimal. For instance,
+-- multiplicative groups can't be exressed at all :shrug:.
+
+-- Addition group.
+class Eq a => AGroup a where
     f0 :: a
-    (<+>) :: a -> a -> a
-    fneg :: a -> a
-    f1 :: a
-    (<*>) :: a -> a -> a
 
-(<->) :: Ring a => a -> a -> a
+    infixl 5 <+>
+    (<+>) :: a -> a -> a
+
+    fneg :: a -> a
+
+    -- In case it can be implemented more efficiently.
+    infixl 6 `times`
+    times :: Integer -> a -> a
+    default times :: Integer -> a -> a
+    times = fastTimes
+
+infixl 5 <->
+(<->) :: AGroup a => a -> a -> a
 (<->) a b = a <+> (fneg b)
 
-times :: (Integral n, Ring a) => n -> a -> a
-times (fromIntegral -> n) a = foldl' (<+>) f0 $ replicate n a
+-- | Slow linear "times" implementation.
+linearTimes :: forall a. (AGroup a) => Integer -> a -> a
+linearTimes n a = foldl' (<+>) f0 $ replicate (fromIntegral n) a
 
-(<^>) :: (Integral n, Ring a) => a -> n -> a
-(<^>) a (fromIntegral -> n) = foldl' (<*>) f1 $ replicate n a
+-- | Double-and-add.
+fastTimes :: forall a. (AGroup a) => Integer -> a -> a
+fastTimes n0 a = tms n0
+  where
+    tms :: Integer -> a
+    tms 0 = f0
+    tms 1 = a
+    tms n = do
+        let (ndiv,nmod) = n `divMod` 2
+        let nnext = tms ndiv
+        if | nmod == 0 -> nnext <+> nnext
+           | otherwise -> nnext <+> nnext <+> a
+
+class (Eq a, AGroup a) => Ring a where
+    f1 :: a
+
+    infixl 6 <*>
+    (<*>) :: a -> a -> a
+
+    infixl 7 <^>
+    (<^>) :: a -> Integer -> a
+    default (<^>) :: a -> Integer -> a
+    (<^>) = fastExp
+
+-- | Linear exponentiation by multiplication.
+linearExp :: Ring a => a -> Integer -> a
+linearExp a n = foldl' (<*>) f1 $ replicate (fromIntegral n) a
 
 -- | Fast powering algorithm for calculating a^p (mod p).
 fastExp :: forall a n . (Ring a, Integral n) => a -> n -> a
@@ -91,37 +89,96 @@ fastExp g n = power g n
         if | bmod == 0 -> bnext <*> bnext
            | otherwise -> bnext <*> bnext <*> a
 
-instance Ring Integer where
-    f0 = 0
-    f1 = 1
-    (<+>) = (+)
-    fneg = negate
-    (<*>) = (*)
+-- | Searchs for the generator given op and list of elements to
+-- produce (also to choose from). For multiplicative group it should
+-- be used with (<*>) and (allElems \\ f0), since 0 is not produced.
+findGenerator :: forall a. (Eq a) => (a -> a -> a) -> [a] -> a
+findGenerator op elems =
+    fromMaybe (error $ "findGenerator: didn't manage to") $
+    find (\g -> let s = genOrderSet [] g g in length s == n) elems
+  where
+    n = length elems
+    genOrderSet acc g0 g | g `elem` acc = acc
+                         | otherwise = genOrderSet (g:acc) g0 (g `op` g0)
 
+-- Field.
 class Ring a => Field a where
     finv :: a -> a
-    -- ^ Multiplicative inverse
+    -- ^ Multiplicative inverse.
+
+-- Finite field.
+class Field a => FField a where
     getGen :: a
-    -- ^ Generator
+    -- ^ Generator.
+    allElems :: [a]
+    -- ^ List all elements.
     getFieldSize :: Proxy a -> Integer
-    -- ^ Field size
+    -- ^ Field size.
+
+    default allElems :: [a]
+    allElems =
+        let (g :: a) = getGen
+            genPowers = iterate (g <*>) g
+        -- f0 + powers
+        in f0:(dropWhile (/= f1) genPowers)
 
     default getFieldSize :: Proxy a -> Integer
-    getFieldSize _ =
-        let (g :: a) = getGen
-            genPowers = iterate (\(i,x) -> (i+1,g <*> x)) (1,g)
-        -- f0 + powers
-        in 1 + fst (head $ dropWhile ((/= f1) . snd) genPowers)
+    getFieldSize _ = fromIntegral $ length (allElems @a)
+
+    default getGen :: a
+    getGen = findGenerator (<*>) (L.delete f0 allElems)
 
 ----------------------------------------------------------------------------
--- Integer ring/field
+-- Integer
 ----------------------------------------------------------------------------
 
-natValI :: forall n. KnownNat n =>  Integer
+instance AGroup Integer where
+    f0 = 0
+    (<+>) = (+)
+    fneg = negate
+
+instance Ring Integer where
+    f1 = 1
+    (<*>) = (*)
+
+----------------------------------------------------------------------------
+-- Double/rational
+----------------------------------------------------------------------------
+
+instance AGroup Double where
+    f0 = 0
+    (<+>) = (+)
+    fneg = negate
+
+instance Ring Double where
+    f1 = 1
+    (<*>) = (*)
+
+instance Field Double where
+    finv x = 1/x
+
+
+instance AGroup Rational where
+    f0 = 0
+    (<+>) = (+)
+    fneg = negate
+
+instance Ring Rational where
+    f1 = 1
+    (<*>) = (*)
+
+instance Field Rational where
+    finv x = 1/x
+
+----------------------------------------------------------------------------
+-- Finite integer ring/field
+----------------------------------------------------------------------------
+
+natValI :: forall n. KnownNat n => Integer
 natValI = toInteger $ natVal (Proxy @n)
 
 -- Z/nZ
-newtype Z (a :: Nat) = Z { unZ :: Integer } deriving (Num, Eq, Ord, Enum, Real, Integral)
+newtype Z (a :: Nat) = Z { unZ :: Integer } deriving (Num, Eq, Ord, Enum, Real, Integral, Generic, Hashable)
 
 instance Show (Z a) where
     show (Z i) = show i
@@ -131,46 +188,63 @@ toZ i = Z $ i `mod` (natValI @n)
 
 class KnownNat n => PrimeNat (n :: Nat)
 
--- Too lazy to define it in any other way
-#define GenZ(N) \
-  instance PrimeNat N;\
+-- Sadly, I do not know a better way to solve this problem. It'd be
+-- nice if GHC ran primality test every time he was checking the
+-- instance. I think I could at least use TH to pre-generate first k
+-- primes. Also if this is tedious to use, one can just define
+-- "instance KnownNat n => PrimeNat n" and forget about this check.
+#define DefPrime(N) instance PrimeNat N;\
 
-GenZ(2)
-GenZ(3)
-GenZ(4)
-GenZ(5)
-GenZ(6)
-GenZ(7)
-GenZ(8)
-GenZ(9)
-GenZ(11)
-GenZ(13)
-GenZ(17)
-GenZ(9539)
+DefPrime(2)
+DefPrime(3)
+DefPrime(4)
+DefPrime(5)
+DefPrime(6)
+DefPrime(7)
+DefPrime(8)
+DefPrime(9)
+DefPrime(11)
+DefPrime(13)
+DefPrime(17)
+DefPrime(19)
+DefPrime(23)
+DefPrime(29)
+DefPrime(41)
+DefPrime(47)
+DefPrime(53)
+DefPrime(59)
+DefPrime(83)
+DefPrime(613)
+DefPrime(631)
+DefPrime(691)
+DefPrime(883)
+DefPrime(1009)
+DefPrime(1051)
+DefPrime(1201)
+DefPrime(1321)
+DefPrime(1723)
+DefPrime(1999)
+DefPrime(2671)
+DefPrime(3221)
+DefPrime(9539)
+DefPrime(17389)
 
-instance (KnownNat n) => Ring (Z n) where
+instance (KnownNat n) => AGroup (Z n) where
     f0 = Z 0
     (Z a) <+> (Z b) = toZ $ a + b
-    f1 = Z 1
     fneg (Z 0) = Z 0
     fneg (Z i) = toZ $ natValI @n - i
+
+instance (KnownNat n) => Ring (Z n) where
+    f1 = Z 1
     (Z a) <*> (Z b) = toZ $ a * b
 
--- | Naive search for any group generator.
-findGenerator :: forall a. (Show a, Field a) => [a] -> a
-findGenerator elems =
-    fromMaybe (error "Couldn't find generator!") $
-    find (\g -> let s = genOrderSet [] g g in length s == n - 1) $ filter (/= f0) elems
-  where
-    n = length elems
-    genOrderSet acc g0 g | g == f1 = nub $ f1 : acc
-                         | g `elem` acc = acc
-                         | otherwise = genOrderSet (g:acc) g0 (g <*> g0)
 
 instance (PrimeNat n) => Field (Z n) where
     finv (Z a) = toZ $ a `fastExp` (natValI @n - 2)
-    getGen = findGenerator $ map toZ [0..(natValI @n - 1)]
+instance (PrimeNat n) => FField (Z n) where
     getFieldSize _ = natValI @n
+    allElems = map toZ $ [0..(natValI @n - 1)]
 
 ----------------------------------------------------------------------------
 -- Polynomials
@@ -178,13 +252,15 @@ instance (PrimeNat n) => Field (Z n) where
 
 -- | Empty polynomial is equivalent to [0]. Big endian (head is higher
 -- degree coefficient).
-newtype Poly a = Poly { unPoly :: [a] } deriving (Functor)
+newtype Poly a = Poly { unPoly :: [a] } deriving (Functor,Ord,Generic)
+
+deriving instance Hashable a => Hashable (Poly a)
 
 instance Show a => Show (Poly a) where
     show (Poly l) = "Poly " ++ show l
 
 -- Removes zeroes from the beginning
-stripZ :: (Ring a) => Poly a -> Poly a
+stripZ :: (AGroup a) => Poly a -> Poly a
 stripZ (Poly []) = Poly [f0]
 stripZ r@(Poly [_]) = r
 stripZ (Poly xs) =
@@ -205,20 +281,20 @@ prettyPoly (stripZ -> (Poly p)) =
     mapFoo (n,1) = show n ++ "x"
     mapFoo (n,i) = show n ++ "x^" ++ show i
 
-instance (Ring a) => Eq (Poly a) where
+instance (AGroup a) => Eq (Poly a) where
     (==) (stripZ -> (Poly p1)) (stripZ -> (Poly p2)) = p1 == p2
 
 deg ::  (Ring a, Integral n) => Poly a -> n
 deg (stripZ -> (Poly p)) = fromIntegral $ length p - 1
 
-applyPoly :: (Field a) => Poly a -> a -> a
+applyPoly :: (FField a) => Poly a -> a -> a
 applyPoly (stripZ -> (Poly p)) v =
     foldr (<+>) f0 $
-        map (\(b,i) -> b <*> (v <^> (i::Int)))
+        map (\(b,i) -> b <*> (v <^> (i::Integer)))
             (reverse p `zip` [0..])
 
 -- Zips two lists adding zeroes to end of the shortest one
-zip0 :: (Ring a) => [a] -> [a] -> [(a,a)]
+zip0 :: (AGroup a) => [a] -> [a] -> [(a,a)]
 zip0 p1 p2 = uncurry zip sameSize
   where
     shortest | length p1 < length p2 = (p1,p2)
@@ -226,12 +302,14 @@ zip0 p1 p2 = uncurry zip sameSize
     diff = length (snd shortest) - length (fst shortest)
     sameSize = shortest & _1 %~ ((replicate diff f0) ++)
 
-instance (Ring a) => Ring (Poly a) where
+instance (AGroup a) => AGroup (Poly a) where
     f0 = Poly [f0]
-    f1 = Poly [f1]
     fneg = fmap fneg
     (Poly p1) <+> (Poly p2) =
         stripZ $ Poly $ map (uncurry (<+>)) $ zip0 p1 p2
+
+instance (Ring a) => Ring (Poly a) where
+    f1 = Poly [f1]
     lhs@(Poly p1) <*> rhs@(Poly p2) =
         let acc0 :: [a]
             acc0 = replicate ((deg lhs + deg rhs)+1) f0
@@ -303,6 +381,30 @@ gcdEucl a b =
         let (_,r) = r0 </> r1
         in if r == f0 then r1 else gcdEuclGo r1 r
 
+-- | For a,b returns (gcd,u,v) such that au + bv = gcd.
+extendedEucl' :: (Euclidian n) => n -> n -> (n, n, n)
+extendedEucl' a b
+    | a == f0 = (b, f0, f1)
+    | otherwise =
+        let (g,s,t) = extendedEucl (b `eMod` a) a
+        in (g, t <-> (b `eDiv` a) <*> s, s)
+
+extendedEucl :: (Euclidian n) => n -> n -> (n, n, n)
+extendedEucl a b =
+    let res@(g,u,v) = extendedEucl' a b in
+      if | u <*> a <+> v <*> b /= g -> error "extendedEucl is broken 1"
+         | a `eMod` g /= f0 -> error "extendedEucl is broken 2"
+         | b `eMod` g /= f0 -> error "extendedEucl is broken 3"
+         | otherwise -> res
+
+findRoots :: forall a. (FField a) => Poly a -> [a]
+findRoots x = go elems0 x
+  where
+    go [] _ = []
+    go (e:es) p = let y = Poly [f1,f0] <-> Poly [e]
+                      (q,r) = p </> y
+                  in if r == f0 then e : go (e:es) q else go es p
+    elems0 = allElems @a
 
 ----------------------------------------------------------------------------
 -- Polynomials quotieng rings/fields
@@ -329,7 +431,11 @@ getCoeffPoly :: forall p n. (KnownNat p, KnownNat n) => Poly (Z n)
 getCoeffPoly = map toZ (reflectCoeffPoly @p @n)
 
 -- Empty polynomial is equivalent for [0]. Head -- higher degree.
-newtype FinPoly p a = FinPoly { unFinPoly :: (Poly a) } deriving Eq
+newtype FinPoly (p :: Nat) a = FinPoly { unFinPoly :: Poly a } deriving (Eq,Ord,Generic)
+
+deriving instance Hashable (Poly a) => Hashable (FinPoly p a)
+
+type FinPolyZ p n = FinPoly p (Z n)
 
 instance (Show a) => Show (FinPoly p a) where
     show (FinPoly x) = "Fin" <> show x
@@ -357,15 +463,14 @@ isPrimePoly p@(Poly pP) =
 mkFinPoly :: forall p n . (KnownNat p, PrimeNat n) => Poly (Z n) -> FinPoly p (Z n)
 mkFinPoly x = FinPoly $ (stripZ x) `eMod` getCoeffPoly @p
 
-remakeFinPoly :: forall p n . (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> FinPoly p (Z n)
-remakeFinPoly (FinPoly x) = mkFinPoly x
-
 type FinPolyNats p n = (KnownNat p, PrimeNat n)
 
-instance (FinPolyNats p n) => Ring (FinPoly p (Z n)) where
+instance (FinPolyNats p n) => AGroup (FinPoly p (Z n)) where
     f0 = mkFinPoly f0
     (<+>) (FinPoly p1) (FinPoly p2) = mkFinPoly (p1 <+> p2)
     fneg (FinPoly p1) = mkFinPoly $ (getCoeffPoly @p) <-> p1
+
+instance (FinPolyNats p n) => Ring (FinPoly p (Z n)) where
     f1 = mkFinPoly f1
     (<*>) (FinPoly p1) (FinPoly p2) = mkFinPoly (p1 <*> p2)
 
@@ -379,33 +484,51 @@ instance PrimePoly 19 2
 -- 67 = x^6 + x + 1 is prime poly over F_2
 instance PrimePoly 67 2
 -- 75 = x^6 + x^3 + x + 1 is NOT prime
+-- 11 = x^3 + x + 1 is prime poly over F_2
+instance PrimePoly 11 2
+-- ℂ: x^2 + 1 for p = 3 (mod 4)
+instance PrimePoly 362 19
+instance PrimePoly 2210 47
+instance PrimePoly 477482 691
+instance PrimePoly 2968730 1723
+
+invFinPolyFermat :: forall p n. (KnownNat p, PrimeNat n) => FinPoly p (Z n) -> FinPoly p (Z n)
+invFinPolyFermat f =
+    let b = fromIntegral (natValI @n) :: Integer
+        s = deg (reflectCoeffPoly @p @n) :: Integer
+        phi = (b ^ s) - 1 -- http://www.dtic.mil/dtic/tr/fulltext/u2/a218148.pdf
+        res = f <^> (phi - 1) -- because f^φ = 1
+    in if res <*> f /= f1 then error "invFinPolyFermat failed" else res
 
 instance (PrimePoly p n) => Field (FinPoly p (Z n)) where
-    finv (FinPoly f) =
-        mkFinPoly $ f <^> (getFieldSize (Proxy @(FinPoly p (Z n))) - 2)
-    getGen = findGenerator allFinPolys
-    getFieldSize _ = do
-        let b :: Integer
-            b = fromIntegral $ natValI @n
-        let s :: Integer
-            s = deg (reflectCoeffPoly @p @n)
-        (b ^ s)
+    finv = invFinPolyFermat
+
+instance (PrimePoly p n) => FField (FinPoly p (Z n)) where
+    allElems = allFinPolys
+    getFieldSize _ =
+        let b = fromIntegral (natValI @n) :: Integer
+            s = deg (reflectCoeffPoly @p @n) :: Integer
+        in (b ^ s)
+
+irreducablePoly :: forall n. (PrimeNat n) => Integer -> Poly (Z n) -> Bool
+irreducablePoly d (stripZ -> a) =
+    let n = natValI @n
+        l = representBack n $ 1 : replicate (fromIntegral d) 0
+        ps = drop (fromIntegral n) $ (map (stripZ . Poly . map (toZ @n) . represent n) [0..(l-1)])
+    in all (\x -> a `eMod` x /= f0) ps
 
 _testFinPolys :: IO ()
 _testFinPolys = do
     let pPoly = [1,0,0,1,1]
     let pEnc = representBack 2 pPoly
     let (x :: FinPoly 19 (Z 2)) = mkFinPoly (Poly [1,0])
-    let z = x <^> (12 :: Int)
+    let z = x <^> 12
     let y = finv z
     print pEnc
     print $ z
     print $ y
     print $ z <*> y
 
-----------------------------------------------------------------------------
--- Gauss
-----------------------------------------------------------------------------
 
 -- | Row dominated matrix
 data Matrix a = Matrix { unMatrix :: [[a]] } deriving Show
@@ -413,6 +536,15 @@ data Matrix a = Matrix { unMatrix :: [[a]] } deriving Show
 -- | Matrix (n,m) size.
 msize :: Matrix a -> (Int,Int)
 msize (Matrix l) = (length l, length (head l))
+
+vmulm :: Ring a => [a] -> Matrix a -> [a]
+vmulm v (Matrix m) = map (product' v) (transpose m)
+  where
+    product' a b = foldl' (<+>) f0 (zipWith (<*>) a b)
+
+mmulm :: Ring a => Matrix a -> Matrix a -> Matrix a
+mmulm (Matrix m1) (Matrix m2) = Matrix $ transpose $ map (`vmulm` Matrix m2) m1
+
 
 -- | Matrix minor.
 minor :: Matrix a -> Int -> Int -> Matrix a
@@ -490,41 +622,12 @@ gaussSolve (Matrix m0)
 
 -- | v * X = y, solves for v
 gaussSolveSystem :: forall a. (Field a) => Matrix a -> [a] -> [a]
-gaussSolveSystem m x = if check then res else error "gaussSolveSystem: failed"
+gaussSolveSystem m x =
+    case () of
+      () | length res /= length (head (unMatrix m)) -> error "gaussSolveSystem: dimensions"
+         | not check -> error "gaussSolveSystem: failed"
+         | otherwise -> res
   where
     check = and $ map (\(r,v) -> foldr1 (<+>) (map (\(a,b) -> a <*> b) $ zip r res) == v) $ unMatrix m `zip` x
     m' = Matrix $ map (\(r,v) -> r ++ [v]) $ unMatrix m `zip` x
     res = map last $ unMatrix $ gaussSolve m'
-
-_testGauss :: IO ()
-_testGauss = print $ gaussSolve m
-  where
-    (m :: Matrix (Z 9539)) = Matrix $ map (map toZ) [[2,6,1,3030,1],[11,2,0,6892,2],[4,1,3,18312,3]]
-
-_testGenerators :: IO ()
-_testGenerators = do
-    print $ getGen @(Z 17)
-    let (g :: Poly (Z 2)) = Poly [1,1,1]
-    print g
-    print (finv (Z 1 :: Z 2))
-    let h = Poly [1,1]
-    print h
-    print $ g `euclPoly` h
-    print $ take 20 $ iterate (<*> g) g
-    print (allFinPolys :: [FinPoly 19 (Z 2)])
-    print $ getGen @(FinPoly 19 (Z 2))
-    print $ getFieldSize (Proxy @(FinPoly 19 (Z 2)))
-    print $ allFinPolys @75 @2
-
-_testPrimality :: IO ()
-_testPrimality = do
-    print $ isPrimePoly $ (Poly [1,0,0,1,1] :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly [1,1,1] :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly [1,0,1,1] :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly [1,0,0,0,1,1,1,0,1] :: Poly (Z 2))
-    print $ (Poly (map toZ $ represent 2 67) :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly (map toZ $ represent 2 75) :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly (map toZ $ represent 2 57) :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly (map toZ $ represent 2 67) :: Poly (Z 2))
-    print $ isPrimePoly $ (Poly (map toZ $ represent 2 51) :: Poly (Z 2))
