@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-01-10 Wed 08:15 -->
+<!-- 2018-06-14 Thu 22:36 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Теория информации, решения задач части 4,7,8</title>
@@ -68,6 +68,7 @@
   pre.src-fortran:before { content: 'Fortran'; }
   pre.src-gnuplot:before { content: 'gnuplot'; }
   pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
   pre.src-java:before { content: 'Java'; }
   pre.src-js:before { content: 'Javascript'; }
   pre.src-latex:before { content: 'LaTeX'; }
@@ -184,7 +185,7 @@
 @licstart  The following is the entire license notice for the
 JavaScript code in this tag.
 
-Copyright (C) 2012-2013 Free Software Foundation, Inc.
+Copyright (C) 2012-2018 Free Software Foundation, Inc.
 
 The JavaScript code in this tag is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -246,7 +247,7 @@ for the JavaScript code in this tag.
 });
 </script>
 <script type="text/javascript"
-        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
 <div id="content">
@@ -255,16 +256,21 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org918692e">1. Задание 4.2</a></li>
-<li><a href="#orge495661">2. Задание 4.4</a></li>
-<li><a href="#org4a04722">3. Задание 7.1</a></li>
-<li><a href="#org8a3dba4">4. Приложение</a></li>
+<li><a href="#orgbc77a81">1. Задание 4.2</a></li>
+<li><a href="#org0b90141">2. Задание 4.4</a></li>
+<li><a href="#org343db65">3. Задание 7.1</a></li>
+<li><a href="#org63ffe76">4. Задание 7.6</a></li>
+<li><a href="#orgf2682e8">5. Задания 8.6-8.7</a></li>
 </ul>
 </div>
 </div>
-
-<div id="outline-container-org918692e" class="outline-2">
-<h2 id="org918692e"><span class="section-number-2">1</span> Задание 4.2</h2>
+<p>
+Весь код для решения задач доступен в открытом репозитории:
+<a href="https://github.com/volhovm/coding-theory-itmo-2017">https://github.com/volhovm/coding-theory-itmo-2017</a>, большая часть
+алгоритмов реализована в файле `Lib.hs`.
+</p>
+<div id="outline-container-orgbc77a81" class="outline-2">
+<h2 id="orgbc77a81"><span class="section-number-2">1</span> Задание 4.2</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Был написан код переборного декодирования по максимуму правдоподобия
@@ -307,8 +313,8 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-orge495661" class="outline-2">
-<h2 id="orge495661"><span class="section-number-2">2</span> Задание 4.4</h2>
+<div id="outline-container-org0b90141" class="outline-2">
+<h2 id="org0b90141"><span class="section-number-2">2</span> Задание 4.4</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Были написаны программы построения решеток (синдромной и через МСФ),
@@ -345,14 +351,13 @@ H =
 </div>
 </div>
 
-<div id="outline-container-org4a04722" class="outline-2">
-<h2 id="org4a04722"><span class="section-number-2">3</span> Задание 7.1</h2>
+<div id="outline-container-org343db65" class="outline-2">
+<h2 id="org343db65"><span class="section-number-2">3</span> Задание 7.1</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 ЛРОС тривиально строится перебором для небольших значений длины
 заданной последовательности (практически показано, что перебором
-сложно искать ЛРОС начиная с размера 22). Генератор приведен в
-приложении.
+сложно искать ЛРОС начиная с размера 22).
 </p>
 
 <p>
@@ -362,89 +367,173 @@ H =
 </p>
 </div>
 </div>
-<div id="outline-container-org8a3dba4" class="outline-2">
-<h2 id="org8a3dba4"><span class="section-number-2">4</span> Приложение</h2>
+<div id="outline-container-org63ffe76" class="outline-2">
+<h2 id="org63ffe76"><span class="section-number-2">4</span> Задание 7.6</h2>
 <div class="outline-text-2" id="text-4">
 <p>
-Декодер по максимуму правдобия, максимуму апостериорной вероятности.
+Я реализиловал необходимые утилиты для построения БЧХ кодов и
+декодер для БЧХ кодов над \(F_{2^k}\). Декодер реализует алгоритм БЧХ
+и имеет две версии &#x2013; в одной полином локаторов ошибок вычисляется
+напрямую с помощью решения матрицы методом Гаусса, в другой для
+этого используется алгоритм БМ.
+</p>
+
+<p>
+Итак, в упражнении предлагается построить двоичный БЧХ код длины 31,
+исправляющий 3 ошибки. Для этого нам нужно поле \(F_{2^5}\), которое
+можно построить как \(F_2\lbrack x \rbrack /(x^6 + x + 1)\), поскольку этот полином
+простой и имеет степень 6. Генератор поля &#x2013; \(x + 1\). Также, для
+исправления трех ошибок нам необходимо иметь \(d = 7\). Будем строить
+БЧХ код в узком смысле &#x2013; искать последовательные степени генератора
+начиная строго с \(b = 1\).
+</p>
+
+<p>
+Алгоритм построения БЧХ кода выдает следующие значения. Число
+циклотомических классов, необходимых для покрытия \(\{1\ldots d-1\}\) &#x2013;
+три:
+\(\{\{1,2,4,8,16,32\},\{3,6,12,24,48,33\},\{5,10,20,40,17,34\}\}\).
+Соответствующие минимальные полиномы и порождающий многочлен:
+</p>
+
+\begin{align*}
+M_1(x) &= 1 + x + x^6 \\
+M_3(x) &= 1 + x + x^2 + x^4 + x^6 \\
+M_5(x) &= 1 + x + x^2 + x^5 + x^6 \\
+g(x) &= 1 + x + x^2 + x^3 + x^6 + x^7 + x^9 + x^{15} + x^{16} + x^{17} + x^{18}
+\end{align*}
+
+<p>
+Степень порождающего многочлена &#x2013; 18, соответственно при \(n = 30\)
+имеем \(k = 12\). Несложно построить также \(G\) и \(H\) этого
+циклического кода, чтобы привести примеры векторов, этому коду
+принадлежащих. Поскольку кодовые слова достаточно длинные, приведем
+только один пример &#x2013; "000000000001111001101000001111".
+</p>
+
+<p>
+Если запустить алгоритм ПГЦ на таком векторе, он вернет его же,
+поскольку обнаружит, что все \(S_i\) равны нулю. Сделаем в этом
+векторе три ошибки в символах с индексами \({2, 4, 6}\) (нумерация с
+нуля), заменив их на единицы, и запустим ПГЦ.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">Maximum</span><span style="color: #333333;"> </span><span style="color: #868B44;">likelihood</span><span style="color: #333333;"> </span><span style="color: #868B44;">decoder.</span>
-<span style="color: #8AAFFA;">decodeML</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Channel</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Double</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
-<span style="color: #8AAFFA;">decodeML</span><span style="color: #333333;"> </span>chan<span style="color: #333333;"> </span>codeWords<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
-<span style="color: #333333;">    </span>fst<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>maximumBy<span style="color: #333333;"> </span>(comparing<span style="color: #333333;"> </span>snd)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
-<span style="color: #333333;">    </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,aPrioriProb<span style="color: #333333;"> </span>c))<span style="color: #333333;"> </span>codeWords
-<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>aPrioriProb<span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>product<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(uncurry<span style="color: #333333;"> </span>chan)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">`zip`</span><span style="color: #333333;"> </span>y
+<pre class="src src-haskell"><span style="color: #8AAFFA;">task76</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
+<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">...</span>
+<span style="color: #333333;">    </span>print<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>second<span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
+<span style="color: #333333;">      </span>decodePGZ<span style="color: #333333;"> </span>bchc<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>fromStrVec<span style="color: #333333;"> </span><span style="color: #868B44;">"001010010001111001101000001111"</span>
 
-<span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">Maximum</span><span style="color: #333333;"> </span><span style="color: #868B44;">a</span><span style="color: #333333;"> </span><span style="color: #868B44;">posterior</span><span style="color: #333333;"> </span><span style="color: #868B44;">probability</span><span style="color: #333333;"> </span><span style="color: #868B44;">decoder.</span>
-<span style="color: #8AAFFA;">decodeMaxAp</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Channel</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">BVector</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Double</span>]<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span>
-<span style="color: #8AAFFA;">decodeMaxAp</span><span style="color: #333333;"> </span>chan<span style="color: #333333;"> </span>codeWords<span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span>
-<span style="color: #333333;">    </span>fst<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>maximumBy<span style="color: #333333;"> </span>(comparing<span style="color: #333333;"> </span>snd)<span style="color: #333333;"> </span>pcy
-<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(c|y)</span>
-<span style="color: #333333;">    </span>pcy<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">M.!</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">*</span><span style="color: #333333;"> </span>pc<span style="color: #333333;"> </span><span style="color: #A197BF;">/</span><span style="color: #333333;"> </span>py))<span style="color: #333333;"> </span>codeWords
-
-<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">map</span><span style="color: #333333;"> </span><span style="color: #637579;">c</span><span style="color: #333333;"> </span><span style="color: #637579;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #637579;">p(y|c)</span>
-<span style="color: #333333;">    </span>computePyc<span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Double</span>
-<span style="color: #333333;">    </span>computePyc<span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>product<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(uncurry<span style="color: #333333;"> </span>chan)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">`zip`</span><span style="color: #333333;"> </span>y
-<span style="color: #333333;">    </span>pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>M.fromList<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>(c,computePyc<span style="color: #333333;"> </span>c))<span style="color: #333333;"> </span>codeWords
-
-<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(y)</span>
-<span style="color: #333333;">    </span>py<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>sum<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>map<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>pycMap<span style="color: #333333;"> </span><span style="color: #A197BF;">M.!</span><span style="color: #333333;"> </span>c<span style="color: #333333;"> </span><span style="color: #A197BF;">*</span><span style="color: #333333;"> </span>pc)<span style="color: #333333;"> </span>codeWords
-
-<span style="color: #333333;">    </span><span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">p(c)</span>
-<span style="color: #333333;">    </span>pc<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>1<span style="color: #A197BF;">/</span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>codeWords)
+<span style="color: #637579;">--</span><span style="color: #333333;"> </span><span style="color: #637579;">Output:</span><span style="color: #333333;"> </span><span style="color: #637579;">([7,2,4],"000000000001111001101000001111")</span>
 </pre>
 </div>
 
 <p>
-Генератор ЛРОС для заданной последовательности.
+Таким образом, ПГЦ нашел все три ошибочных индекса и выдал
+исправленную строку. Произвольный порядок индексов обусловлен
+алгоритмом поиска корней полинома локаторов, который не гарантирует
+никакого конкретного порядка на выходе.
 </p>
-<div class="org-src-container">
-<pre class="src src-haskell"><span style="color: #868B44;">--</span><span style="color: #333333;"> </span><span style="color: #868B44;">|</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#1051;&#1056;&#1054;&#1057;</span><span style="color: #333333;"> </span><span style="color: #868B44;">generator,</span><span style="color: #333333;"> </span><span style="color: #868B44;">first</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">&#923;_i,</span><span style="color: #333333;"> </span><span style="color: #868B44;">second</span><span style="color: #333333;"> </span><span style="color: #868B44;">list</span><span style="color: #333333;"> </span><span style="color: #868B44;">is</span><span style="color: #333333;"> </span><span style="color: #868B44;">S_i</span><span style="color: #333333;"> </span><span style="color: #868B44;">(initial).</span>
-<span style="color: #FFA070;">data</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #FFA070;">deriving</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Eq</span>
-
-<span style="color: #FFA070;">instance</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Show</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>show<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>a<span style="color: #333333;"> </span>b)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #868B44;">"LrosGen</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>a<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span>b
-
-<span style="color: #8AAFFA;">emulateLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">Bool</span>]
-<span style="color: #8AAFFA;">emulateLros</span><span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>st)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>curOut<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>unsafeLast<span style="color: #333333;"> </span>st
-<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>pr<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>scalar<span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>st
-<span style="color: #333333;">    </span><span style="color: #FFA070;">let</span><span style="color: #333333;"> </span>newst<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>(length<span style="color: #333333;"> </span>st)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>pr<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>st
-<span style="color: #333333;">    </span>curOut<span style="color: #333333;"> </span><span style="color: #EF5C5F;">:</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>(<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>coeffs<span style="color: #333333;"> </span>newst)
-
-<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">Integer</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span>]
-<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>v)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"genLros:</span><span style="color: #333333;"> </span><span style="color: #868B44;">you</span><span style="color: #333333;"> </span><span style="color: #868B44;">don't</span><span style="color: #333333;"> </span><span style="color: #868B44;">want</span><span style="color: #333333;"> </span><span style="color: #868B44;">that,</span><span style="color: #333333;"> </span><span style="color: #868B44;">use</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
-<span style="color: #8AAFFA;">genLros</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>v<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>[<span style="color: #EF5C5F;">LrosGen</span><span style="color: #333333;"> </span>y<span style="color: #333333;"> </span>initState<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>y<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>binaryVectors<span style="color: #333333;"> </span>n]
-<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>initState<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>reverse<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span>n)<span style="color: #333333;"> </span>v
-
-<span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">BVector</span><span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">LrosGen</span>
-<span style="color: #8AAFFA;">findLros</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>2
-<span style="color: #333333;">  </span><span style="color: #FFA070;">where</span>
-<span style="color: #333333;">    </span>go<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>n<span style="color: #333333;"> </span><span style="color: #A197BF;">&gt;</span><span style="color: #333333;"> </span>(fromIntegral<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>length<span style="color: #333333;"> </span>vec)<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span>error<span style="color: #333333;"> </span><span style="color: #868B44;">"There</span><span style="color: #333333;"> </span><span style="color: #868B44;">always</span><span style="color: #333333;"> </span><span style="color: #868B44;">exists</span><span style="color: #333333;"> </span><span style="color: #868B44;">naive</span><span style="color: #333333;"> </span><span style="color: #868B44;">lros"</span>
-<span style="color: #333333;">         </span><span style="color: #A197BF;">|</span><span style="color: #333333;"> </span>otherwise<span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">              </span>putText<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span><span style="color: #868B44;">"Iterating</span><span style="color: #333333;"> </span><span style="color: #868B44;">for</span><span style="color: #333333;"> </span><span style="color: #868B44;">"</span><span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;&gt;</span><span style="color: #333333;"> </span>show<span style="color: #333333;"> </span>n
-<span style="color: #333333;">              </span>maybe<span style="color: #333333;"> </span>(go<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>n<span style="color: #A197BF;">+</span>1)<span style="color: #333333;"> </span>pure<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span>
-<span style="color: #333333;">                  </span>find<span style="color: #333333;"> </span>(<span style="color: #A197BF;">\</span>lr<span style="color: #333333;"> </span><span style="color: #A197BF;">-&gt;</span><span style="color: #333333;"> </span>vec<span style="color: #333333;"> </span><span style="color: #A197BF;">`isPrefixOf`</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>lr)<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>genLros<span style="color: #333333;"> </span>n<span style="color: #333333;"> </span>vec
-
-<span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">::</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">IO</span><span style="color: #333333;"> </span><span style="color: #EF5C5F;">()</span>
-<span style="color: #8AAFFA;">task71</span><span style="color: #333333;"> </span><span style="color: #A197BF;">=</span><span style="color: #333333;"> </span><span style="color: #FFA070;">do</span>
-<span style="color: #333333;">    </span>s<span style="color: #333333;"> </span><span style="color: #A197BF;">&lt;-</span><span style="color: #333333;"> </span>findLros<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>fromStrVec<span style="color: #333333;"> </span><span style="color: #868B44;">"010011000111"</span>
-<span style="color: #333333;">    </span>print<span style="color: #333333;"> </span>s
-<span style="color: #333333;">    </span>putStrLn<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>showVec<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>take<span style="color: #333333;"> </span>22<span style="color: #333333;"> </span><span style="color: #A197BF;">$</span><span style="color: #333333;"> </span>emulateLros<span style="color: #333333;"> </span>s
-</pre>
 </div>
+</div>
+<div id="outline-container-orgf2682e8" class="outline-2">
+<h2 id="orgf2682e8"><span class="section-number-2">5</span> Задания 8.6-8.7</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Мой вариант (87) предполагает работу со сверточным кодом \((4,5,6)\),
+с параметрами, соответственно, \(k = 1\) и \(n = 3\). Полиномы в полном
+виде: \(D^2\), \(D^2 + 1\), \(D^2 + x\). Схема кодера, а
+также диаграмма состояния кода представлены на следующем
+изображении:
+</p>
+
+
+<div class="figure">
+<p><img src="./convolution.jpeg" alt="convolution.jpeg" width="75%" />
+</p>
+</div>
+
+<p>
+Полная система для нахождения расширенной производящей функции кода
+\(T(D,I)\) выглядит так:
+</p>
+
+\begin{align*}
+g_0 &= D^3 g_1 \\
+g_1 &= D g_2 + D^3 g_3 \\
+g_2 &= D^3 I g_1 + D I \\
+g_3 &= D^2 I g_2 + D^3 I g_3
+\end{align*}
+
+<p>
+Система решается подстановкой \(g_3\) и \(g_2\) в \(g_1\), а затем \(g_1\) в
+\(g_0\). В итоге производящая функция и ее производная \(F(D)|_{I=1}\) имеют следующий вид:
+</p>
+
+\begin{align*}
+T(D,I) &= \frac{-D^5 I + D^8 I^2 - D^9 I^2}{-1 + D^3 I + D^4 I - D^7 I^2 + D^8 I^2} \\ \\
+F(D) &= \frac{- D^12 + D^11 + 2 D^9 - 2 D^8 + D^5}{(D^8 - D^7 + D^4 + D^3 - 1)^2}
+\end{align*}
+
+<p>
+Также сразу приложим вычисления необходимые для задания 8.7. Нам
+предлагается также построить графики оценки вероятности ошибки для
+кода со спектром, равным усеченному \(T(D,I)\). Для этого представим
+$T(D,I)$4 в виде ряда (по возрастающей степени \(I\)) и возьмем из
+него 10 и 5 элементов соответственно:
+</p>
+
+\begin{align*}
+T(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4 +
+         2 D^{16} I^4 + 5 D^{17} I^4 + D^{18} I^5 + 2 D^{19} I^5 + \\
+         &5 D^{20} I^5 + D^{21} I^5 (I + 8) + 2 D^{22} I^6 +
+         6 D^{23} I^6 + D^{24} I^6 (I + 10) + O(D^{25})\\ \\
+T_5(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4\\
+T_{10}(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4 +
+         2 D^{16} I^4 + 5 D^{17} I^4 + D^{18} I^5 + 2 D^{19} I^5 + 5 D^{20} I^5
+
+\end{align*}
+
+<p>
+Проинтегрировав \(T_5(D,I)\) и \(T_{10}(D,I)\) и приняв \(I = 1\), получаем:
+</p>
+
+\begin{align*}
+F_5(D) = &4 D^{15} + 9 D^{13} + 3 D^{12} + 4 D^9 + D^5\\
+F_{10}(D) = &25 D^{20} + 10 D^{19} + 5 D^{18} + 20 D^{17} + 8 D^{16} +
+          4 D^{15} + 9 D^{13} + 3 D^{12} + 4 D^9 + D^5
+\end{align*}
+
+<p>
+Далее, построим графики оценок вероятностей ошибки для
+соответственно \(F(D), F_5(D), F_{10}(D)\). Для ДСК примем \(p_0 =
+  e^{-E/N_0}\), в остальном будем в точности следовать выкладкам
+параграфа 8.3 учебника. В результате получаем следующий график:
+</p>
+
+
+<div class="figure">
+<p><img src="./convolution_6.png" alt="convolution_6.png" width="75%" />
+</p>
+</div>
+
+<p>
+Оценке вероятности на ДСК соответствуют функции DSC (discrete
+stationary channel), на АБГШ &#x2013; AWGN (abstract white gaussian
+noise). Цифрам 5 и 10 соответствуют усеченные спектры кода. Как
+можно видеть из графика, оригинальные значения имеют выраженный
+спайк, а менее точные приближения (с точки зрения наличия меньшего
+количества элементов разложения) сглажены в этом месте. Кроме того,
+верхняя граница на вероятность ошибки у АБГШ существенно меньше &#x2013;
+впрочем, это не вызывает удивления (примерно такой же результат был
+получен и в (4.2)).
+</p>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Волхов Михаил, M4139</p>
-<p class="date">Created: 2018-01-10 Wed 08:15</p>
+<p class="date">Created: 2018-06-14 Thu 22:36</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

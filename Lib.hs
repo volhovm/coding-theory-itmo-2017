@@ -328,22 +328,25 @@ task215 =
 checkGH :: BMatrix -> BMatrix -> Bool
 checkGH g h = isNullM $ g `mMulM` transpose h
 
----- | Finds g given h.
---findGfromH :: [BVector] -> [BVector]
---findGfromH h =
---    fromMaybe (error "can't happen2") $
---    find (\g -> formsBasis g && checkGH g h) allPossibleG
---  where
---    formsBasis g = not $ linearDependent $ transpose g
---
---    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
---    n = length h
---    r = length $ head h
---    k = n - r
+{-
+-- | Finds g given h.
+findGfromH :: [BVector] -> [BVector]
+findGfromH h =
+    fromMaybe (error "can't happen2") $
+    find (\g -> formsBasis g && checkGH g h) allPossibleG
+  where
+    formsBasis g = not $ linearDependent $ transpose g
+
+    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
+    n = length h
+    r = length $ head h
+    k = n - r
+-}
 
 boolToZ = map (map (bool (Z 0) (Z 1)))
 zToBool = let x (Z 0) = False
               x (Z 1) = True
+              x _     = error "zToBool"
           in map (map x)
 
 gToHGauss :: BMatrix -> BMatrix
@@ -582,10 +585,12 @@ erf x = sign*y
     t  =  1.0/(1.0 + p* abs x)
     y  =  1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*exp(-x*x)
 
+-- Q(x)
+qfunc :: Double -> Double
+qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
+
 calcp :: Double -> Double
-calcp en0 =
-    let qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
-    in qfunc (sqrt (2 * en0))
+calcp en0 = qfunc (sqrt (2 * en0))
 
 task42 :: Integer -> IO ()
 task42 i = do
@@ -866,9 +871,7 @@ cyclicToG (fromIntegral -> n) g =
     k = n - r
 
 paramsToCode :: forall p. (PrimePoly p 2) => BCHParams p 2 -> Integer -> BCHCode p
-paramsToCode bchParams@BCHParams{..} bchN =
-    traceShow bchH $
-    BCHCode{..}
+paramsToCode bchParams@BCHParams{..} bchN = BCHCode{..}
   where
     pContent = reverse $ unPoly bchPoly
     l :: Integer
@@ -909,18 +912,39 @@ paramsToCode bchParams@BCHParams{..} bchN =
                            zeroes ki <> (reverse $ unPoly bchg) <> zeroes (bchN - l - ki))
                         [0..bchK-1]
 
--- | Input is BCH parameters and input word.
+-- | Berlekamp–Massey algorithm.
+-- Input -- syndrom polynomial S_i, output -- Λ polynomial.
+solveBM :: forall p n. (PrimePoly p n) => [FinPoly p (Z n)] -> [FinPoly p (Z n)]
+solveBM s = reverse $ drop 1 $ go 0 [f1] [f1] 1
+  where
+    go :: Int -> [FinPoly p (Z n)] -> [FinPoly p (Z n)] -> Int -> [FinPoly p (Z n)]
+    go _ locs _ r | r > (length s) = locs
+    go l locs b r =
+        let delta :: FinPoly p (Z n)
+            delta = foldr (<+>) f0 (map (\i -> locs !! i <*> s !! (r - i - 1)) [0..l])
+            b1 = f0 : b
+        in if delta == f0 then go l locs b1 (r+1)
+           else let (locs1 :: Poly (FinPoly p (Z n))) = Poly (reverse locs)
+                    (b2 :: Poly (FinPoly p (Z n))) = Poly (reverse b1)
+                    t = locs1 <-> (Poly [delta]) <*> b2
+                    (b3,l') = if 2 * l <= r - 1
+                              then (Poly [finv delta] <*> locs1, r - l)
+                              else (b2, l)
+                in go l' (reverse $ unPoly t) (reverse $ unPoly b3) (r+1)
+
+-- | Peterson–Gorenstein–Zierler algorithm. Input is BCH parameters and input word.
 decodePGZ :: forall p. (PrimePoly p 2) => BCHCode p -> BVector -> ([Int],BVector)
 decodePGZ BCHCode{..} c =
 --    traceShow (slist) $
 --    traceShow ("nu", ν) $
---    traceShow ("M", mmatrix) $
+--    traceShow ("M", _mmatrix) $
 --    traceShow ("locs", locs) $
+--    traceShow ("locs'", _locs') $
 --    traceShow ("locPoly", locsPoly) $
 --    traceShow ("locPoly All Elems", allElems @(FinPoly p (Z 2))) $
 --    traceShow ("locPolyRoots", findRoots locsPoly) $
 --    traceShow ("xlist", xlist) $
---    traceShow ("ylist", ylist) $
+--    traceShow ("ylist", _ylist) $
     if all (== f0) slist then ([],c) else (positions, corrected)
   where
 
@@ -940,12 +964,16 @@ decodePGZ BCHCode{..} c =
                else computeErrors (i-1)
 
     -- M, number of errors
-    (mmatrix, ν) = computeErrors t
+    (_mmatrix, ν) = computeErrors t
 
-    -- Λ_i
-    locs :: [FinPoly p (Z 2)]
-    locs = gaussSolveSystem mmatrix $
+    -- Λ_i (computed using gauss)
+    _locs' :: [FinPoly p (Z 2)]
+    _locs' = gaussSolveSystem _mmatrix $
         map fneg $ take (fromInteger ν) $ drop (fromInteger ν) slist
+
+    -- Λ_i computed using BM algorithm.
+    locs :: [FinPoly p (Z 2)]
+    locs = solveBM slist
 
     locsPoly :: Poly (FinPoly p (Z 2))
     locsPoly = Poly $ locs <> [f1]
@@ -954,12 +982,12 @@ decodePGZ BCHCode{..} c =
     xlist :: [FinPoly p (Z 2)]
     xlist = map finv $ findRoots locsPoly
 
-    ylist :: [FinPoly p (Z 2)]
-    ylist =
+    -- Y_i are just [1] because we're in Z 2
+    _ylist :: [FinPoly p (Z 2)]
+    _ylist =
         let xmatrix = Matrix $ map (\i -> map (<^> i) xlist) [1..ν]
             scol = (take (fromInteger ν) slist)
-        in traceShow (xmatrix,scol) $
-           gaussSolveSystem xmatrix scol
+        in gaussSolveSystem xmatrix scol
 
     positions :: [Int]
     positions = mapMaybe (`elemIndex` αpowers) xlist
@@ -999,37 +1027,132 @@ testBCH = do
         map showVec $
         take 20 $ codeG g
     --print $ decodePGZ bchc $ fromStrVec "000011101100101" -- normal
-    print $ decodePGZ bchc $ fromStrVec "101111101100101"
+    print $ decodePGZ bchc $ fromStrVec "000011101100101"
 
---task76 :: IO ()
---task76 = do
---    let bch = buildBCH @67 @2 7
---    let bchc = paramsToCode bch 10
---    let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
---            unMatrix $ bchG bchc
---    print bchc
---    print $
---        map showVec $
---        take 20 $ codeG g
---    print $ decodePGZ bchc $ fromStrVec "0010100110"
+task76 :: IO ()
+task76 = do
+    let bch = buildBCH @67 @2 7
+    let α = getGen @(FinPoly 67 (Z 2))
+    print α
+    let bchc = paramsToCode bch 30
+    let g = map (fromStrVec . map (head . (show :: Integer -> String) . unZ)) $
+            unMatrix $ bchG bchc
+    print bchc
+    print $
+        map showVec $
+        take 20 $ codeG g
+    print $ second showVec $
+        decodePGZ bchc $ fromStrVec "001010010001111001101000001111"
+
+----------------------------------------------------------------------------
+-- Convolutional codes
+----------------------------------------------------------------------------
+
+data ConvCode = ConvCode
+    { ccGenFunc :: Double -> Double
+    , ccK       :: Integer -- k
+    , ccN       :: Integer -- n
+    , ccDf      :: Integer -- d_f
+    }
+
+exampleConvCode :: ConvCode
+exampleConvCode = ConvCode{..}
+  where
+    ccK = 1
+    ccN = 2
+    ccDf = 5
+    ccGenFunc d = d^5 / ((1 - 2 * d)^2)
+
+
+
+myConvCode :: ConvCode
+myConvCode = ConvCode{..}
+  where
+    ccK = 1
+    ccN = 3
+    ccDf = 5
+    ccGenFunc :: Double -> Double
+    ccGenFunc d =
+      let p x (i :: Integer) = x ^ i
+      in (- d `p` 12 + d `p` 11 + 2 * (d `p` 9) - 2 * (d `p` 8) + d `p` 5) /
+         ((d `p` 8 - d `p` 7 + d `p` 4 + d `p` 3 - 1) `p` 2)
 
 {-
+Original:
+T(d,s) = (-d^5 s + d^8 s^2 - d^9 s^2)/(-1 + d^3 s + d^4 s - d^7 s^2 + d^8 s^2)
+Derivative:
+F(d) = (- d^12 + d^11 + 2 d^9 - 2 d^8 + d^5)/(d^8 - d^7 + d^4 + d^3 - 1)^2
+Expansion of T(d,s):
+T(D,s) = d^5 s + 2 d^9 s^2 + d^12 s^3 + 3 d^13 s^3 + d^15 s^4 + 2 d^16 s^4 + 5 d^17 s^4 + d^18 s^5 + 2 d^19 s^5 + 5 d^20 s^5 + d^21 s^5 (s + 8) + 2 d^22 s^6 + 6 d^23 s^6 + d^24 s^6 (s + 10) + O(d^25)
+Expansion of F(d):
+F(d) = d^5 + 4 d^9 + 3 d^12 + 9 d^13 + 4 d^15 + 8 d^16 + 20 d^17 + 5 d^18 + 10 d^19 + 25 d^20 + 46 d^21 + 12 d^22 + 36 d^23 + 67 d^24 + O(d^25)
 
-BCHCode {bchN = 15, bchK = 12,
-bchParams = BCHParams {bchMs = [FinPoly [1,1,0,0],FinPoly [1,0]], bchPoly = FinPoly [1,0,1,1], bchPows = (1,4), bchD = 5, bchCyclotomic = [[3,6,12,9],[1,2,4,8]]},
-bchG = Matrix {unMatrix =
-[[1,1,0,1,0,0,0,0,0,0,0,0,0,0,0]
-,[0,1,1,0,1,0,0,0,0,0,0,0,0,0,0]
-,[0,0,1,1,0,1,0,0,0,0,0,0,0,0,0]
-,[0,0,0,1,1,0,1,0,0,0,0,0,0,0,0]
-,[0,0,0,0,1,1,0,1,0,0,0,0,0,0,0]
-,[0,0,0,0,0,1,1,0,1,0,0,0,0,0,0]
-,[0,0,0,0,0,0,1,1,0,1,0,0,0,0,0]
-,[0,0,0,0,0,0,0,1,1,0,1,0,0,0,0]
-,[0,0,0,0,0,0,0,0,1,1,0,1,0,0,0]
-,[0,0,0,0,0,0,0,0,0,1,1,0,1,0,0]
-,[0,0,0,0,0,0,0,0,0,0,1,1,0,1,0]
-,[0,0,0,0,0,0,0,0,0,0,0,1,1,0,1]]}}
-["000000000000000","000000000001101","000000000011010","000000000010111","000000000110100","000000000111001","000000000101110","000000000100011","000000001101000","000000001100101","000000001110010","000000001111111","000000001011100","000000001010001","000000001000110","000000001001011","000000011010000","000000011011101","000000011001010","000000011000111"]
-
+T expansion:
+T(D,s) = d^5 s + 2 d^9 s^2 + d^12 (3 d + 1) s^3 + d^15 (5 d^2 + 2 d + 1) s^4 + d^18 (8 d^3 + 5 d^2 + 2 d + 1) s^5 + O(s^6)
+Leave 10 elems:
+T_10(D,s) = d^5 s + 2 d^9 s^2 + d^12 (3 d + 1) s^3 + d^15 (5 d^2 + 2 d + 1) s^4 + d^18 (5 d^2 + 2 d + 1) s^5 + O(s^6)
+Related derivative:
+F_10(D)
+  = 3 (3 d + 1) d^12 + 4 d^9 + d^5 + 5 (5 d^2 + 2 d + 1) d^18 + 4 (5 d^2 + 2 d + 1) d^15
+  = 25 d^20 + 10 d^19 + 5 d^18 + 20 d^17 + 8 d^16 + 4 d^15 + 9 d^13 + 3 d^12 + 4 d^9 + d^5
 -}
+
+updCode foo = let cc = myConvCode in cc { ccGenFunc = foo }
+
+myConvCode10 =
+    updCode $ \d -> 25 * d^20 + 10 * d^19 + 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
+
+myConvCode8 = updCode $ \d -> 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
+
+myConvCode5 = updCode $ \d -> 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
+myConvCode4 = updCode $ \d -> 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
+myConvCode3 = updCode $ \d -> 3 * d^12 + 4 * d^9 + d^5
+
+data ConvChanParam = ConvChanParam
+    { convB  :: Double -> Double -- B(w)
+    , convD0 :: Double          -- D_0
+    }
+
+-- Function from E/N_0 to channel params
+newtype ConvChan = ConvChan { unConvChan :: Double -> ConvChanParam }
+
+awgnConvChan :: ConvChan
+awgnConvChan = ConvChan $ \en0 ->
+    ConvChanParam (\w -> qfunc (sqrt (2 * w * en0)) * exp (w * en0)) (exp $ -en0)
+
+dscConvChan :: ConvChan
+dscConvChan = ConvChan $ \en0 ->
+    let p0 = exp (- en0)
+    in ConvChanParam (\w -> (1-p0)/(1-2*p0)*sqrt(2/pi/w)) (2 * sqrt (p0 * (1 - p0)))
+
+-- Error upper bound
+convError :: ConvCode -> ConvChan -> Double -> Double
+convError (ConvCode{..}) c en0 =
+    let ConvChanParam{..} = (unConvChan c) en0
+    in 1 / (fromInteger ccK) * convB (fromInteger ccDf) * ccGenFunc convD0
+
+plotConv :: IO ()
+plotConv = do
+    let f2d (t,f) = Data2D [Title t, Style Lines] [] f
+    let log10 x = log x / log 10
+    let frange = [-4,-3.95..10]
+
+    (datasets :: [(String,[(Double,Double)])]) <-
+        pure $ [
+                 ("AWGN", map (\x -> (x,log10 $ convError myConvCode awgnConvChan x)) frange)
+               , ("DSC", map (\x -> (x,log10 $ convError myConvCode dscConvChan x)) frange)
+               , ("AWGN 10", map (\x -> (x,log10 $ convError myConvCode10 awgnConvChan x)) frange)
+               , ("DSC 10", map (\x -> (x,log10 $ convError myConvCode10 dscConvChan x)) frange)
+               , ("AWGN 5", map (\x -> (x,log10 $ convError myConvCode5 awgnConvChan x)) frange)
+               , ("DSC 5", map (\x -> (x,log10 $ convError myConvCode5 dscConvChan x)) frange)
+--               , ("awgn 8", map (\x -> (x,log10 $ convError myConvCode8 awgnConvChan x)) frange)
+--               , ("dsc 8", map (\x -> (x,log10 $ convError myConvCode8 dscConvChan x)) frange)
+         --      , ("awgn 4", map (\x -> (x,log10 $ convError myConvCode4 awgnConvChan x)) frange)
+         --      , ("dsc 4", map (\x -> (x,log10 $ convError myConvCode4 dscConvChan x)) frange)
+--               , ("awgn 3", map (\x -> (x,log10 $ convError myConvCode3 awgnConvChan x)) frange)
+--               , ("dsc 3", map (\x -> (x,log10 $ convError myConvCode3 dscConvChan x)) frange)
+--               , ("awgn example", map (\x -> (x,log10 $ convError exampleConvCode awgnConvChan x)) frange)
+--               , ("dsc example", map (\x -> (x,log10 $ convError exampleConvCode dscConvChan x)) frange)
+               ]
+
+    void $ plot (PNG "conv.png") $ map f2d datasets
