@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-06-14 Thu 22:36 -->
+<!-- 2018-06-15 Fri 15:11 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Теория информации, решения задач части 4,7,8</title>
@@ -256,11 +256,12 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#orgbc77a81">1. Задание 4.2</a></li>
-<li><a href="#org0b90141">2. Задание 4.4</a></li>
-<li><a href="#org343db65">3. Задание 7.1</a></li>
-<li><a href="#org63ffe76">4. Задание 7.6</a></li>
-<li><a href="#orgf2682e8">5. Задания 8.6-8.7</a></li>
+<li><a href="#org22a0fdd">1. Задание 4.2</a></li>
+<li><a href="#orgb81ab14">2. Задание 4.4</a></li>
+<li><a href="#orgd7ca3f1">3. Задание 7.1</a></li>
+<li><a href="#org9dab972">4. Задание 7.6</a></li>
+<li><a href="#org07193cd">5. Задания 8.6-8.7</a></li>
+<li><a href="#org7882e30">6. Задание 8.8</a></li>
 </ul>
 </div>
 </div>
@@ -269,8 +270,8 @@ for the JavaScript code in this tag.
 <a href="https://github.com/volhovm/coding-theory-itmo-2017">https://github.com/volhovm/coding-theory-itmo-2017</a>, большая часть
 алгоритмов реализована в файле `Lib.hs`.
 </p>
-<div id="outline-container-orgbc77a81" class="outline-2">
-<h2 id="orgbc77a81"><span class="section-number-2">1</span> Задание 4.2</h2>
+<div id="outline-container-org22a0fdd" class="outline-2">
+<h2 id="org22a0fdd"><span class="section-number-2">1</span> Задание 4.2</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Был написан код переборного декодирования по максимуму правдоподобия
@@ -313,8 +314,8 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-org0b90141" class="outline-2">
-<h2 id="org0b90141"><span class="section-number-2">2</span> Задание 4.4</h2>
+<div id="outline-container-orgb81ab14" class="outline-2">
+<h2 id="orgb81ab14"><span class="section-number-2">2</span> Задание 4.4</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Были написаны программы построения решеток (синдромной и через МСФ),
@@ -351,8 +352,8 @@ H =
 </div>
 </div>
 
-<div id="outline-container-org343db65" class="outline-2">
-<h2 id="org343db65"><span class="section-number-2">3</span> Задание 7.1</h2>
+<div id="outline-container-orgd7ca3f1" class="outline-2">
+<h2 id="orgd7ca3f1"><span class="section-number-2">3</span> Задание 7.1</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 ЛРОС тривиально строится перебором для небольших значений длины
@@ -367,8 +368,8 @@ H =
 </p>
 </div>
 </div>
-<div id="outline-container-org63ffe76" class="outline-2">
-<h2 id="org63ffe76"><span class="section-number-2">4</span> Задание 7.6</h2>
+<div id="outline-container-org9dab972" class="outline-2">
+<h2 id="org9dab972"><span class="section-number-2">4</span> Задание 7.6</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Я реализиловал необходимые утилиты для построения БЧХ кодов и
@@ -436,8 +437,8 @@ g(x) &= 1 + x + x^2 + x^3 + x^6 + x^7 + x^9 + x^{15} + x^{16} + x^{17} + x^{18}
 </p>
 </div>
 </div>
-<div id="outline-container-orgf2682e8" class="outline-2">
-<h2 id="orgf2682e8"><span class="section-number-2">5</span> Задания 8.6-8.7</h2>
+<div id="outline-container-org07193cd" class="outline-2">
+<h2 id="org07193cd"><span class="section-number-2">5</span> Задания 8.6-8.7</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Мой вариант (87) предполагает работу со сверточным кодом \((4,5,6)\),
@@ -506,8 +507,8 @@ F_{10}(D) = &25 D^{20} + 10 D^{19} + 5 D^{18} + 20 D^{17} + 8 D^{16} +
 
 <p>
 Далее, построим графики оценок вероятностей ошибки для
-соответственно \(F(D), F_5(D), F_{10}(D)\). Для ДСК примем \(p_0 =
-  e^{-E/N_0}\), в остальном будем в точности следовать выкладкам
+соответственно \(F(D), F_5(D), F_{10}(D)\). Для ДСК как обычно принимаем \(p_0 =
+  Q(\sqrt{2E/N_0})\) и следовуем выкладкам
 параграфа 8.3 учебника. В результате получаем следующий график:
 </p>
 
@@ -530,10 +531,13 @@ noise). Цифрам 5 и 10 соответствуют усеченные сп�
 </p>
 </div>
 </div>
+<div id="outline-container-org7882e30" class="outline-2">
+<h2 id="org7882e30"><span class="section-number-2">6</span> Задание 8.8</h2>
+</div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Волхов Михаил, M4139</p>
-<p class="date">Created: 2018-06-14 Thu 22:36</p>
+<p class="date">Created: 2018-06-15 Fri 15:11</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

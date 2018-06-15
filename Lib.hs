@@ -18,6 +18,7 @@ module Lib
     , distance
     , showM
     , task42
+    , task88
     ) where
 
 
@@ -26,7 +27,7 @@ import Universum hiding (head, last, transpose, (<*>))
 
 import Control.Lens (at, ix, (?=))
 import qualified Data.HashSet as HS
-import Data.List (elemIndex, findIndex, head, last, nub, (!!))
+import Data.List (elemIndex, findIndex, groupBy, head, last, nub, (!!))
 import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
 import GHC.Conc (par)
@@ -78,12 +79,17 @@ binaryVectors = binGen
         let x = binGen (n-1)
         in map (False :) x <> map (True :) x
 
+intToBool :: Integer -> Bool
+intToBool 1 = True
+intToBool 0 = False
+intToBool _ = error "intToBool"
+
+boolToInt :: Bool -> Integer
+boolToInt False = 0
+boolToInt True  = 1
+
 fromIntVector :: [Integer] -> [Bool]
-fromIntVector = map toBool
-  where
-    toBool 1 = True
-    toBool 0 = False
-    toBool e = error $ "fromIntVector: " <> show e
+fromIntVector = map intToBool
 
 sumBVectors :: BVector -> BVector -> BVector
 sumBVectors = zipWith s
@@ -502,7 +508,7 @@ illustrateGVH = do
 -- Part 4
 ----------------------------------------------------------------------------
 
--- | Channel is function from (c,y) to probability p.
+-- | Channel is function from (c,y) (c ∈ Bool) to probability f(y|c).
 type Channel = Bool -> Double -> Double
 
 type Encoder = Bool -> IO Double
@@ -517,7 +523,7 @@ dsc ε = curry $ \case
     (True,  0) -> ε
     _          -> error "dsc is invalid"
 
-dscEncode :: Double -> Bool -> IO Double
+dscEncode :: Double -> Encoder
 dscEncode ε b = do
     r <- randomRIO (0,1)
     pure $ case bool b (not b) $ r < ε of
@@ -535,7 +541,7 @@ awgn n0 e =
     gaussian :: Double -> Double -> Double -> Double
     gaussian μ σ2 x = exp (- ((x - μ)**2)/(2*σ2)) / (sqrt (2 * pi * σ2))
 
-awgnEncode :: Double -> Double -> Bool -> IO Double
+awgnEncode :: Double -> Double -> Encoder
 awgnEncode n0 e v0 = do
     let se = sqrt e
     let v = bool (-se) se v0
@@ -589,6 +595,7 @@ erf x = sign*y
 qfunc :: Double -> Double
 qfunc x = 1 - 0.5 * (erf (x / sqrt 2) + 1)
 
+-- Calculates the DSC probability from E/N0
 calcp :: Double -> Double
 calcp en0 = qfunc (sqrt (2 * en0))
 
@@ -1063,8 +1070,6 @@ exampleConvCode = ConvCode{..}
     ccDf = 5
     ccGenFunc d = d^5 / ((1 - 2 * d)^2)
 
-
-
 myConvCode :: ConvCode
 myConvCode = ConvCode{..}
   where
@@ -1099,14 +1104,8 @@ F_10(D)
 
 updCode foo = let cc = myConvCode in cc { ccGenFunc = foo }
 
-myConvCode10 =
-    updCode $ \d -> 25 * d^20 + 10 * d^19 + 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
-
-myConvCode8 = updCode $ \d -> 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
-
+myConvCode10 = updCode $ \d -> 25 * d^20 + 10 * d^19 + 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
 myConvCode5 = updCode $ \d -> 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
-myConvCode4 = updCode $ \d -> 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
-myConvCode3 = updCode $ \d -> 3 * d^12 + 4 * d^9 + d^5
 
 data ConvChanParam = ConvChanParam
     { convB  :: Double -> Double -- B(w)
@@ -1122,7 +1121,7 @@ awgnConvChan = ConvChan $ \en0 ->
 
 dscConvChan :: ConvChan
 dscConvChan = ConvChan $ \en0 ->
-    let p0 = exp (- en0)
+    let p0 = calcp en0 --exp (- en0)
     in ConvChanParam (\w -> (1-p0)/(1-2*p0)*sqrt(2/pi/w)) (2 * sqrt (p0 * (1 - p0)))
 
 -- Error upper bound
@@ -1135,24 +1134,210 @@ plotConv :: IO ()
 plotConv = do
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
     let log10 x = log x / log 10
-    let frange = [-4,-3.95..10]
+    let frange = [-9,-8.95..12]
+    let fromdecibels :: Double -> Double
+        fromdecibels x = 10 ** (x / 10)
 
+    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromdecibels x))) frange)
     (datasets :: [(String,[(Double,Double)])]) <-
         pure $ [
-                 ("AWGN", map (\x -> (x,log10 $ convError myConvCode awgnConvChan x)) frange)
-               , ("DSC", map (\x -> (x,log10 $ convError myConvCode dscConvChan x)) frange)
-               , ("AWGN 10", map (\x -> (x,log10 $ convError myConvCode10 awgnConvChan x)) frange)
-               , ("DSC 10", map (\x -> (x,log10 $ convError myConvCode10 dscConvChan x)) frange)
-               , ("AWGN 5", map (\x -> (x,log10 $ convError myConvCode5 awgnConvChan x)) frange)
-               , ("DSC 5", map (\x -> (x,log10 $ convError myConvCode5 dscConvChan x)) frange)
---               , ("awgn 8", map (\x -> (x,log10 $ convError myConvCode8 awgnConvChan x)) frange)
---               , ("dsc 8", map (\x -> (x,log10 $ convError myConvCode8 dscConvChan x)) frange)
-         --      , ("awgn 4", map (\x -> (x,log10 $ convError myConvCode4 awgnConvChan x)) frange)
-         --      , ("dsc 4", map (\x -> (x,log10 $ convError myConvCode4 dscConvChan x)) frange)
---               , ("awgn 3", map (\x -> (x,log10 $ convError myConvCode3 awgnConvChan x)) frange)
---               , ("dsc 3", map (\x -> (x,log10 $ convError myConvCode3 dscConvChan x)) frange)
---               , ("awgn example", map (\x -> (x,log10 $ convError exampleConvCode awgnConvChan x)) frange)
---               , ("dsc example", map (\x -> (x,log10 $ convError exampleConvCode dscConvChan x)) frange)
+                 patt "AWGN" myConvCode awgnConvChan
+               , patt "DSC" myConvCode dscConvChan
+               , patt "AWGN 10" myConvCode10 awgnConvChan
+               , patt "DSC 10" myConvCode10 dscConvChan
+               , patt "AWGN 5" myConvCode5 awgnConvChan
+               , patt "DSC 5" myConvCode5 dscConvChan
                ]
 
-    void $ plot (PNG "conv.png") $ map f2d datasets
+    --void $ plot (PNG "conv.png") $ map f2d datasets
+    void $ plot (SVG "conv.svg") $ map f2d datasets
+
+-- columns of elements, each element is (state, index_next_col -> code_output)
+-- if there are two elements in the elem, then it's "for false and for true",
+-- if one it's "for false"
+--
+-- These are only lattices for convolutional codes with k = 1.
+type ConvLattice = [[ (BVector, Map Bool (Int, BVector)) ]]
+
+-- Build my conv lattice, argument is the number of layers in between (L-4).
+convLattice :: Int -> ConvLattice
+convLattice l
+    | l < 2 = error "convLattice: l can't be less then 2"
+    | otherwise = prefix <> replicate (l - 2) middle <> postfix
+  where
+    mkl = M.fromList . ([False,True] `zip`) . map (swap . first fromStrVec)
+    prefix =
+        [ [ ([False,False], mkl [("000",0),("010",1)] )]
+
+        , [ ([False,False], mkl [("000",0),("010",2)] )
+          , ([True,False],  mkl [("001",1),("011",3)] )]
+
+        ]
+
+    middle =
+          [ ([False,False], mkl [("000",0),("010",2)] )
+          , ([False,True],  mkl [("111",0),("111",2)] )
+          , ([True,False],  mkl [("001",1),("011",3)] )
+          , ([True,True],   mkl [("111",1),("111",3)] )
+          ]
+
+    postfix =
+        [
+          [ ([False,False], mkl [("000",0)])
+          , ([False,True],  mkl [("111",0)])
+          , ([True,False],  mkl [("001",1)])
+          , ([True,True],   mkl [("111",1)]) ]
+
+        , [ ([False,False], mkl [("000",0)])
+          , ([False,True],  mkl [("111",0)]) ]
+        ]
+
+--(!!!) :: (Show a) => [a] -> Text -> Int -> a
+--(!!!) a t s = case drop s a of
+--                 []    -> error $ "!!!" <> show (a,t,s)
+--                 (x:_) -> x
+
+encodeConv :: ConvLattice -> BVector -> BVector
+encodeConv lat ((++ [False,False]) -> v) = go lat v 0
+  where
+    go [] [] _ = []
+    go [] _  _= error "encodeConv 1"
+    go _ [] _ = error "encodeConv 2"
+    go (row:rs) (b:bs) i =
+        let (_st,m) = row !! i
+            (nextI,symbols) = fromMaybe (error "encodeConv") $ b `M.lookup` m
+        in symbols ++ go rs bs nextI
+
+convCodeWords :: ConvLattice -> [BVector]
+convCodeWords lat =
+    let s = length lat - 2
+    in map (encodeConv lat) (binaryVectors s)
+
+-- Going to be (yet another) implementation of viterbi decoder.
+decodeConv :: Channel -> ConvLattice -> Decoder
+decodeConv chan lat y0 = reverse $ drop 2 $ reverse $ go lat y0 [([],0)]
+  where
+    -- L(y), page 97, we're trying to maximise the ∑|L(y)|
+    reliability yi = log $ (chan False yi) / (chan True yi)
+
+    go :: ConvLattice -> [Double] -> [(BVector,Double)] -> BVector
+    go [] _ [(path,_m1)] = reverse path
+    go _ [] _ = error "decodeConv: input is too short"
+    go (row:lat') y metrics =
+        let maps :: [(Int,Map Bool (Int, BVector))]
+            maps = map (\(i,(_,m)) -> (i,m)) $ [(0::Int)..] `zip` row
+            asLists :: [[(Int,(Bool,BVector,Int))]]
+            asLists =
+                groupBy ((==) `on` fst) $
+                sortOn fst $
+                concatMap (\(i,m) -> map (\(b,(nx,bv)) -> (nx,(b,bv,i))) (M.toList m)) maps
+            -- map from the next layer elements to our layer elements
+            -- code word and our index
+            invMap :: Map Int [(Bool,BVector,Int)]
+            invMap =
+                M.fromList $
+                map (\elems -> (fst (head elems), map snd elems)) asLists
+            bti :: Bool -> Double
+            bti False = -1
+            bti True  = 1
+            withMetrics :: Map Int (BVector,Double)
+            withMetrics =
+                M.map (\incomeEdges ->
+                         let mapped = map (\(b,code,j) ->
+                                             let (bv,mprev) = metrics !! j
+                                                 mΔ = sum $ map (uncurry (*)) $
+                                                      map reliability (take 3 y) `zip`
+                                                      map bti code
+                                             in (b:bv,mprev+mΔ))
+                                          incomeEdges
+                             chosen = maximumBy (comparing $ abs . snd) mapped
+                         in chosen)
+                      invMap
+            nextMetrics = map snd $ sortOn fst $ M.toList withMetrics
+        in go lat' (drop 3 y) nextMetrics
+
+testDecodeConv :: IO ()
+testDecodeConv = do
+    let l = convLattice 4
+    origVecs <- replicateM (fromInteger 5) (randomVec 4)
+    print origVecs
+    let rVecs = map (encodeConv l) origVecs
+    --print rVecs
+    rVecs' <- mapM (mapM (dscEncode 0.0001)) rVecs
+    let back = map (decodeConv (dsc 0.0001) l) rVecs'
+    print back
+    print $ back == origVecs
+    print $ decodeConv (dsc 0.001) l $
+        map (fromIntegral . boolToInt) $ fromStrVec "000000000000000000"
+
+randomVec :: Integer -> IO BVector
+randomVec 0 = pure []
+randomVec n = randomIO >>= \b -> ((:) b) <$> randomVec (n-1)
+
+task88 :: Integer -> IO ()
+task88 i = do
+    putText "task88"
+    let log10 x = log x / log 10
+    let diffV x y = weight $ x `sumBVectors` y
+
+    (rVecsVar :: IORef (Map Integer ([BVector],[BVector]))) <- newIORef mempty
+
+    -- k = 1; n, enc, dec are passed
+    let funcGen :: Integer -> Encoder -> Decoder -> Double
+        funcGen n encoder decoder = unsafePerformIO $ fmap force $ do
+            putText $ "." <> show n <> "."
+            (origVecs,rVecs) <-
+                M.lookup n <$> readIORef rVecsVar >>= \case
+                  Just x -> pure x
+                  Nothing -> do
+                      let l = convLattice (fromIntegral n)
+                      origVecs <- replicateM (fromInteger i) (randomVec n)
+                      let rVecs = map (encodeConv l) origVecs
+                      atomicModifyIORef rVecsVar $ \v ->
+                          (v & at n .~ Just (origVecs, rVecs),())
+                      pure (origVecs, rVecs)
+
+            (rVecsEnc :: [[Double]]) <- forM rVecs (mapM encoder)
+            let calcRes dc =
+                    sum (map (\(a,b) -> fromIntegral $ dc b `diffV` a)
+                             (origVecs `zip` rVecsEnc)) /
+                    fromIntegral (i * n)
+            pure $ force $ calcRes decoder
+    let fromDB :: Double -> Double
+        fromDB x = 10 ** (x / 10)
+
+    let dscDo n (fromDB -> en0) =
+            let e = calcp en0
+            in funcGen n
+                       (dscEncode e)
+                       (decodeConv (dsc e) (convLattice (fromIntegral n)))
+                       --(decodeML (dsc e) (convCodeWords $ convLattice (fromIntegral n)))
+    let awgnDo n (fromDB -> en0) =
+            let e = 5
+                n0 = e / en0
+            in funcGen n
+                       (awgnEncode n0 e)
+                       (decodeConv (awgn n0 e) (convLattice (fromIntegral n)))
+                       --(decodeML (awgn n0 e) (convCodeWords $ convLattice (fromIntegral n)))
+
+    let f2d (t,f) = Data2D [Title t, Style Lines] [] f
+    let frange = [-3,-2.7..7]
+
+    let pat t foo n = (t, map (\x -> (x, log10 $ foo n x)) frange)
+    (datasets :: [(String,[(Double,Double)])]) <-
+        pure $ [ pat "DSC 5" dscDo 5
+               , pat "AWGN 5" awgnDo 5
+               , pat "DSC 10" dscDo 10
+               , pat "AWGN 10" awgnDo 10
+               ]
+
+    print datasets
+
+    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromDB x))) [-3,-2.95..8])
+    (datasets2 :: [(String,[(Double,Double)])]) <-
+        pure $ [
+                 patt "Bound AWGN" myConvCode awgnConvChan
+               , patt "Bound DSC" myConvCode dscConvChan
+               ]
+
+    void $ plot (SVG "conv_extra.svg") $ map f2d (datasets <> datasets2)

@@ -1,11 +1,11 @@
--- | asoenuh
+-- | Testing.
 
 module Main where
 
-import           Universum
+import Universum
 
-import           Lib
+import Lib
 
 main :: IO ()
 main = do
-    task42 500000
+    task88 50000
