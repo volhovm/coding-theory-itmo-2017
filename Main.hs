@@ -8,4 +8,5 @@ import Lib
 
 main :: IO ()
 main = do
+    --task42 10000
     task88 50000

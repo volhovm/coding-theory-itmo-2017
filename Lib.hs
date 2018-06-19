@@ -84,7 +84,7 @@ intToBool 1 = True
 intToBool 0 = False
 intToBool _ = error "intToBool"
 
-boolToInt :: Bool -> Integer
+boolToInt :: Integral n => Bool -> n
 boolToInt False = 0
 boolToInt True  = 1
 
@@ -123,6 +123,9 @@ allCombinations xs = concatMap (flip combinations xs) [1..(toInteger $ length xs
 
 log2 :: Floating a => a -> a
 log2 x = log x / log 2
+
+log10 :: Floating a => a -> a
+log10 x = log x / log 10
 
 weight :: BVector -> Integer
 weight = sum . map (bool 0 1)
@@ -494,7 +497,7 @@ buildGilbertVarshamovH n k = genVectors (n-1) [initVec]
 
 illustrateGVH :: IO ()
 illustrateGVH = do
-    void $ plot (PNG "kek.png")
+    void $ plot [PNG "kek.png"]
         [ Function2D [Title "Hamming"] [Range (1::Double) 22]
           (\(round -> k) -> fst $ findDRange (2*k) k)
         , Function2D [Title "Gilbert-Varshamov"] [Range 1 22]
@@ -604,7 +607,6 @@ task42 i = do
     let g = h23Dimq
     let n :: Integer
         n = fromIntegral $ length g23
-    let log10 x = log x / log 10
     let code = codeG g
     let diffV x y = weight $ x `sumBVectors` y
     rVecsVar <-
@@ -654,9 +656,8 @@ task42 i = do
               putStrLn $ "Evaluated " <> t
               pure ret)
         [ ("DSC", dscDo, frange1), ("AWGN", awgnDo, frange2) ]
-    putText "mda"
     print datasets
-    void $ plot (SVG "task42PlotDimqTemp.svg") $ map f2d datasets
+    void $ plot [SVG "task42PlotDimqTemp.svg"] $ map f2d datasets
 
 
 type Lattice v e = [[(v, Map Int e)]]
@@ -1062,14 +1063,6 @@ data ConvCode = ConvCode
     , ccDf      :: Integer -- d_f
     }
 
-exampleConvCode :: ConvCode
-exampleConvCode = ConvCode{..}
-  where
-    ccK = 1
-    ccN = 2
-    ccDf = 5
-    ccGenFunc d = d^5 / ((1 - 2 * d)^2)
-
 myConvCode :: ConvCode
 myConvCode = ConvCode{..}
   where
@@ -1079,33 +1072,29 @@ myConvCode = ConvCode{..}
     ccGenFunc :: Double -> Double
     ccGenFunc d =
       let p x (i :: Integer) = x ^ i
-      in (- d `p` 12 + d `p` 11 + 2 * (d `p` 9) - 2 * (d `p` 8) + d `p` 5) /
-         ((d `p` 8 - d `p` 7 + d `p` 4 + d `p` 3 - 1) `p` 2)
-
-{-
-Original:
-T(d,s) = (-d^5 s + d^8 s^2 - d^9 s^2)/(-1 + d^3 s + d^4 s - d^7 s^2 + d^8 s^2)
-Derivative:
-F(d) = (- d^12 + d^11 + 2 d^9 - 2 d^8 + d^5)/(d^8 - d^7 + d^4 + d^3 - 1)^2
-Expansion of T(d,s):
-T(D,s) = d^5 s + 2 d^9 s^2 + d^12 s^3 + 3 d^13 s^3 + d^15 s^4 + 2 d^16 s^4 + 5 d^17 s^4 + d^18 s^5 + 2 d^19 s^5 + 5 d^20 s^5 + d^21 s^5 (s + 8) + 2 d^22 s^6 + 6 d^23 s^6 + d^24 s^6 (s + 10) + O(d^25)
-Expansion of F(d):
-F(d) = d^5 + 4 d^9 + 3 d^12 + 9 d^13 + 4 d^15 + 8 d^16 + 20 d^17 + 5 d^18 + 10 d^19 + 25 d^20 + 46 d^21 + 12 d^22 + 36 d^23 + 67 d^24 + O(d^25)
-
-T expansion:
-T(D,s) = d^5 s + 2 d^9 s^2 + d^12 (3 d + 1) s^3 + d^15 (5 d^2 + 2 d + 1) s^4 + d^18 (8 d^3 + 5 d^2 + 2 d + 1) s^5 + O(s^6)
-Leave 10 elems:
-T_10(D,s) = d^5 s + 2 d^9 s^2 + d^12 (3 d + 1) s^3 + d^15 (5 d^2 + 2 d + 1) s^4 + d^18 (5 d^2 + 2 d + 1) s^5 + O(s^6)
-Related derivative:
-F_10(D)
-  = 3 (3 d + 1) d^12 + 4 d^9 + d^5 + 5 (5 d^2 + 2 d + 1) d^18 + 4 (5 d^2 + 2 d + 1) d^15
-  = 25 d^20 + 10 d^19 + 5 d^18 + 20 d^17 + 8 d^16 + 4 d^15 + 9 d^13 + 3 d^12 + 4 d^9 + d^5
--}
+      in (-d`p`9 + 2 *d`p`8 + d`p`7 - 2 *d`p`6 + d`p`5)/((d`p`6 - d`p`4 + d`p`3 + d - 1)`p`2)
 
 updCode foo = let cc = myConvCode in cc { ccGenFunc = foo }
+myConvCode10 = updCode $ \d -> d^5 + 4 * d^8 + 3 * d^9 + 4 * d^10 + 14 * d^11 + 14 * d^12 + 17 * d^13 + 40 * d^14 + 48 * d^15 + 62 * d^16
+myConvCode5 = updCode $ \d -> d^5 + 4 * d^8 + 3 * d^9 + 4 * d^10 + 14 * d^11
 
-myConvCode10 = updCode $ \d -> 25 * d^20 + 10 * d^19 + 5 * d^18 + 20 * d^17 + 8 * d^16 + 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
-myConvCode5 = updCode $ \d -> 4 * d^15 + 9 * d^13 + 3 * d^12 + 4 * d^9 + d^5
+{-
+g0 = D^3 * g1
+g1 = D * g2 + D^2 * g3
+g2 = D^2 * I * g1 + D * I
+g3 = D * I * g3 + D^2 * I * g2
+
+T(D,I)
+g0 = (-(D^5 I (1 - D I + D^3 I))/(-1 + D I + D^3 I - D^4 I^2 + D^6 I^2))
+Series expansion:
+T(d,s) = d^5 s + 2 d^8 s^2 + d^9 s^3 + d^10 s^4 + d^11 s^3 (s^2 + 3) + d^12 s^4 (s^2 + 2) + d^13 s^5 (s^2 + 2) + d^14 s^4 (s^4 + 2 s^2 + 5) + d^15 s^5 (s^4 + 2 s^2 + 5) + d^16 s^6 (s^4 + 2 s^2 + 6) + O(d^17)
+
+Derivative:
+F(d) = (-d^9 + 2 d^8 + d^7 - 2 d^6 + d^5)/(d^6 - d^4 + d^3 + d - 1)^2
+Series:
+F(d) = d^5 + 4 d^8 + 3 d^9 + 4 d^10 + 14 d^11 + 14 d^12 + 17 d^13 + 40 d^14 + 48 d^15 + 62 d^16 + 118 d^17 + 156 d^18 + O(d^19)
+
+-}
 
 data ConvChanParam = ConvChanParam
     { convB  :: Double -> Double -- B(w)
@@ -1133,7 +1122,6 @@ convError (ConvCode{..}) c en0 =
 plotConv :: IO ()
 plotConv = do
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
-    let log10 x = log x / log 10
     let frange = [-9,-8.95..12]
     let fromdecibels :: Double -> Double
         fromdecibels x = 10 ** (x / 10)
@@ -1150,46 +1138,52 @@ plotConv = do
                ]
 
     --void $ plot (PNG "conv.png") $ map f2d datasets
-    void $ plot (SVG "conv.svg") $ map f2d datasets
+    void $ plot [ SVG "conv.svg"
+                , Labels "Eb/N0 (dB)" "log10(Epb)"
+                , MainTitle "Error estimation"
+                , Grid]
+                (map f2d datasets)
 
--- columns of elements, each element is (state, index_next_col -> code_output)
+-- columns of elements, each element is (index_next_col -> code_output)
 -- if there are two elements in the elem, then it's "for false and for true",
 -- if one it's "for false"
 --
 -- These are only lattices for convolutional codes with k = 1.
-type ConvLattice = [[ (BVector, Map Bool (Int, BVector)) ]]
+--
+-- It was better before, but now it's like this for performance
+type ConvLattice = [[ [(Bool, (Int, BVector))] ]]
 
--- Build my conv lattice, argument is the number of layers in between (L-4).
+-- input parameter is length of the original space.
 convLattice :: Int -> ConvLattice
 convLattice l
     | l < 2 = error "convLattice: l can't be less then 2"
     | otherwise = prefix <> replicate (l - 2) middle <> postfix
   where
-    mkl = M.fromList . ([False,True] `zip`) . map (swap . first fromStrVec)
+    mkl = ([False,True] `zip`) . map (swap . first fromStrVec)
     prefix =
-        [ [ ([False,False], mkl [("000",0),("010",1)] )]
+        [ [ mkl [("000",0),("010",1)] ]
 
-        , [ ([False,False], mkl [("000",0),("010",2)] )
-          , ([True,False],  mkl [("001",1),("011",3)] )]
+        , [ mkl [("000",0),("010",2)]
+          , mkl [("001",1),("011",3)] ]
 
         ]
 
     middle =
-          [ ([False,False], mkl [("000",0),("010",2)] )
-          , ([False,True],  mkl [("111",0),("111",2)] )
-          , ([True,False],  mkl [("001",1),("011",3)] )
-          , ([True,True],   mkl [("111",1),("111",3)] )
+          [ mkl [("000",0),("010",2)]
+          , mkl [("111",0),("101",2)]
+          , mkl [("001",1),("011",3)]
+          , mkl [("110",1),("100",3)]
           ]
 
     postfix =
         [
-          [ ([False,False], mkl [("000",0)])
-          , ([False,True],  mkl [("111",0)])
-          , ([True,False],  mkl [("001",1)])
-          , ([True,True],   mkl [("111",1)]) ]
+          [ mkl [("000",0)]
+          , mkl [("111",0)]
+          , mkl [("001",1)]
+          , mkl [("110",1)] ]
 
-        , [ ([False,False], mkl [("000",0)])
-          , ([False,True],  mkl [("111",0)]) ]
+        , [ mkl [("000",0)]
+          , mkl [("111",0)] ]
         ]
 
 --(!!!) :: (Show a) => [a] -> Text -> Int -> a
@@ -1198,77 +1192,95 @@ convLattice l
 --                 (x:_) -> x
 
 encodeConv :: ConvLattice -> BVector -> BVector
-encodeConv lat ((++ [False,False]) -> v) = go lat v 0
+encodeConv lat ((++ [False,False]) -> v) = go lat v 0 0
   where
-    go [] [] _ = []
-    go [] _  _= error "encodeConv 1"
-    go _ [] _ = error "encodeConv 2"
-    go (row:rs) (b:bs) i =
-        let (_st,m) = row !! i
-            (nextI,symbols) = fromMaybe (error "encodeConv") $ b `M.lookup` m
-        in symbols ++ go rs bs nextI
+    go [] [] _ _ = []
+    go [] _  _ _ = error "encodeConv 1"
+    go _ [] _ _ = error "encodeConv 2"
+    go (row:rs) (b:bs) i layerIx =
+        let m = row !! i
+            (nextI,symbols) = snd $ m !! bool 0 1 b
+        in symbols ++ go rs bs nextI (layerIx + 1)
 
 convCodeWords :: ConvLattice -> [BVector]
 convCodeWords lat =
     let s = length lat - 2
     in map (encodeConv lat) (binaryVectors s)
 
--- Going to be (yet another) implementation of viterbi decoder.
+-- Reference implementation
+decodeConvML :: Channel -> ConvLattice -> Decoder
+decodeConvML chan lat y = maxWord
+  where
+    withCodeWords = binaryVectors (length lat - 2) `zip` convCodeWords lat
+    maxWord = fst $ maximumBy (comparing snd) $
+              map (\(w,c) -> (w,aPrioriProb c)) withCodeWords
+    aPrioriProb c = product $ map (uncurry chan) $ c `zip` y
+
+-- Viterbi decoder.
 decodeConv :: Channel -> ConvLattice -> Decoder
 decodeConv chan lat y0 = reverse $ drop 2 $ reverse $ go lat y0 [([],0)]
   where
-    -- L(y), page 97, we're trying to maximise the ∑|L(y)|
-    reliability yi = log $ (chan False yi) / (chan True yi)
+    ---- L(y), page 97, we're trying to maximise the ∑|L(y)|
+    --reliability yi = log $ (chan False yi) / (chan True yi)
+    likelihood ci yi = log $ chan ci yi
+    likelihoodMany c y = sum $ map (uncurry likelihood) (c `zip` y)
 
     go :: ConvLattice -> [Double] -> [(BVector,Double)] -> BVector
     go [] _ [(path,_m1)] = reverse path
     go _ [] _ = error "decodeConv: input is too short"
-    go (row:lat') y metrics =
-        let maps :: [(Int,Map Bool (Int, BVector))]
-            maps = map (\(i,(_,m)) -> (i,m)) $ [(0::Int)..] `zip` row
-            asLists :: [[(Int,(Bool,BVector,Int))]]
+    go (row:lat') y !metrics =
+        let asLists :: [[(Bool,BVector,Int)]]
             asLists =
+                map (map snd) $
                 groupBy ((==) `on` fst) $
                 sortOn fst $
-                concatMap (\(i,m) -> map (\(b,(nx,bv)) -> (nx,(b,bv,i))) (M.toList m)) maps
+                concatMap (\(i,m) -> map (\(b,(nx,bv)) -> (nx,(b,bv,i))) m) $
+                [(0::Int)..] `zip` row
             -- map from the next layer elements to our layer elements
             -- code word and our index
-            invMap :: Map Int [(Bool,BVector,Int)]
-            invMap =
-                M.fromList $
-                map (\elems -> (fst (head elems), map snd elems)) asLists
-            bti :: Bool -> Double
-            bti False = -1
-            bti True  = 1
-            withMetrics :: Map Int (BVector,Double)
-            withMetrics =
-                M.map (\incomeEdges ->
+            newMetrics :: [(BVector,Double)]
+            newMetrics =
+                map (\incomeEdges ->
                          let mapped = map (\(b,code,j) ->
                                              let (bv,mprev) = metrics !! j
-                                                 mΔ = sum $ map (uncurry (*)) $
-                                                      map reliability (take 3 y) `zip`
-                                                      map bti code
+                                                 mΔ = likelihoodMany code (take 3 y)
                                              in (b:bv,mprev+mΔ))
                                           incomeEdges
-                             chosen = maximumBy (comparing $ abs . snd) mapped
+                             chosen = maximumBy (comparing snd) mapped
                          in chosen)
-                      invMap
-            nextMetrics = map snd $ sortOn fst $ M.toList withMetrics
-        in go lat' (drop 3 y) nextMetrics
+                    asLists
+        in go lat' (drop 3 y) newMetrics
 
 testDecodeConv :: IO ()
 testDecodeConv = do
-    let l = convLattice 4
-    origVecs <- replicateM (fromInteger 5) (randomVec 4)
-    print origVecs
-    let rVecs = map (encodeConv l) origVecs
-    --print rVecs
-    rVecs' <- mapM (mapM (dscEncode 0.0001)) rVecs
-    let back = map (decodeConv (dsc 0.0001) l) rVecs'
-    print back
-    print $ back == origVecs
-    print $ decodeConv (dsc 0.001) l $
-        map (fromIntegral . boolToInt) $ fromStrVec "000000000000000000"
+    let l = convLattice 2
+
+    origVecs <- replicateM 1000 (randomVec 2)
+    forM_ origVecs $ \oVec -> do
+        let encoded = encodeConv l oVec
+        spoiled <- spoil 2 encoded
+        let back1 = decodeConv (dsc 0.0001) l $ map (fromInteger . boolToInt) spoiled
+        let back2 = decodeConvML (dsc 0.0001) l $ map (fromInteger . boolToInt) spoiled
+
+        let dump = do
+                putStrLn $ showVec oVec
+                putStrLn $ showVec encoded
+                putStrLn $ showVec spoiled
+                putStrLn $ showVec back1
+                putStrLn $ showVec back2
+
+        when (back1 /= back2) $ dump >> error "Decoders are not equivalent"
+        when (back1 /= oVec) $ dump >> error "Decode error"
+--    print $ back == origVecs
+--    print $ decodeConv (dsc 0.1) l $
+--        map (fromIntegral . boolToInt) $ fromStrVec "110101111000"
+--    print $ decodeConv (dsc 0.1) l $
+--        map (fromIntegral . boolToInt) $ fromStrVec "010001111000"
+  where
+    spoil :: Int -> BVector -> IO BVector
+    spoil n v = do
+        ixs <- replicateM n $ randomRIO (0,length v - 1)
+        pure $ foldl' (\v' i -> v' & ix i %~ not) v ixs
 
 randomVec :: Integer -> IO BVector
 randomVec 0 = pure []
@@ -1277,7 +1289,6 @@ randomVec n = randomIO >>= \b -> ((:) b) <$> randomVec (n-1)
 task88 :: Integer -> IO ()
 task88 i = do
     putText "task88"
-    let log10 x = log x / log 10
     let diffV x y = weight $ x `sumBVectors` y
 
     (rVecsVar :: IORef (Map Integer ([BVector],[BVector]))) <- newIORef mempty
@@ -1285,7 +1296,6 @@ task88 i = do
     -- k = 1; n, enc, dec are passed
     let funcGen :: Integer -> Encoder -> Decoder -> Double
         funcGen n encoder decoder = unsafePerformIO $ fmap force $ do
-            putText $ "." <> show n <> "."
             (origVecs,rVecs) <-
                 M.lookup n <$> readIORef rVecsVar >>= \case
                   Just x -> pure x
@@ -1306,38 +1316,41 @@ task88 i = do
     let fromDB :: Double -> Double
         fromDB x = 10 ** (x / 10)
 
-    let dscDo n (fromDB -> en0) =
+    let dscDo n en0 =
             let e = calcp en0
             in funcGen n
                        (dscEncode e)
                        (decodeConv (dsc e) (convLattice (fromIntegral n)))
-                       --(decodeML (dsc e) (convCodeWords $ convLattice (fromIntegral n)))
-    let awgnDo n (fromDB -> en0) =
+    let awgnDo n en0 =
             let e = 5
                 n0 = e / en0
             in funcGen n
                        (awgnEncode n0 e)
                        (decodeConv (awgn n0 e) (convLattice (fromIntegral n)))
-                       --(decodeML (awgn n0 e) (convCodeWords $ convLattice (fromIntegral n)))
 
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
-    let frange = [-3,-2.7..7]
+    let frange = [-2,-1.8..6]
 
-    let pat t foo n = (t, map (\x -> (x, log10 $ foo n x)) frange)
+    let pat t foo = (t, map (\x -> (x, log10 $ foo (fromDB x))) frange)
     (datasets :: [(String,[(Double,Double)])]) <-
-        pure $ [ pat "DSC 5" dscDo 5
-               , pat "AWGN 5" awgnDo 5
-               , pat "DSC 10" dscDo 10
-               , pat "AWGN 10" awgnDo 10
+        pure $ [
+                 pat "DSC" (dscDo 4)
+               , pat "AWGN" (awgnDo 4)
+--                 pat "DSC" (dscDoML 4)
+--               , pat "AWGN" (awgnDoML 4)
                ]
 
     print datasets
 
-    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromDB x))) [-3,-2.95..8])
-    (datasets2 :: [(String,[(Double,Double)])]) <-
-        pure $ [
-                 patt "Bound AWGN" myConvCode awgnConvChan
-               , patt "Bound DSC" myConvCode dscConvChan
-               ]
+    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromDB x))) [-2,-1.95..8])
+    let (datasets2 :: [(String,[(Double,Double)])]) =
+            [ patt "Bound AWGN" myConvCode awgnConvChan
+            , patt "Bound DSC" myConvCode dscConvChan
+--            , patt "Example AWGN" exampleConvCode awgnConvChan
+--            , patt "Example DSC" exampleConvCode dscConvChan
+            ]
 
-    void $ plot (SVG "conv_extra.svg") $ map f2d (datasets <> datasets2)
+    void $ plot [ SVG "conv_extra.svg"
+                , Labels "Eb/N0 (dB)" "log10(Epb)", MainTitle "Big great plot", Grid] $
+        map f2d (datasets <> datasets2)
+    --void $ plot (SVG "wat.svg") [ \x -> x, \x -> 1 / (2**x), \x -> log10 $ 8 ** x]
