@@ -36,9 +36,6 @@ import Graphics.EasyPlot
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random
 
-import qualified Data.Time.Clock as Tm
-import Numeric as N
-
 import Fields
 
 ----------------------------------------------------------------------------
@@ -590,8 +587,8 @@ task42 i = do
     rVecsVar <-
         newIORef =<<
         map (code !!) <$> replicateM (fromInteger i) (randomRIO (0,length code - 1))
-    let funcGen :: Encoder -> Decoder -> Decoder -> (Double,Double)
-        funcGen encoder decoder1 decoder2 = unsafePerformIO $ fmap force $ do
+    let funcGen :: Encoder -> Decoder -> Decoder -> IO (Double,Double)
+        funcGen encoder decoder1 decoder2 = fmap force $ do
             (rVecsEnc1 :: [(BVector,[Double])]) <-
                 readIORef rVecsVar >>= \rVecs ->
                 forM rVecs (\r -> (r,) <$> mapM encoder r)
@@ -628,7 +625,7 @@ task42 i = do
               putStrLn $ "Evaluating " <> t
               points <-
                   mapM (\x -> do putStrLn $ "calculating " <> t <> " in " <> show x
-                                 res <- pure $ force $ f x
+                                 res <- force <$> f x
                                  putTextLn $ "res is : " <> show res
                                  pure $ force $ (x, res)) rng
               let points1 = map (second fst) points
@@ -1268,22 +1265,19 @@ task88 i = do
     -- k = 1; n, enc, dec are passed
     let funcGen :: Integer -> Encoder -> Decoder -> Double
         funcGen n encoder decoder = unsafePerformIO $ fmap force $ do
-            (origVecs,rVecs) <- tMeasureIO "genVecs" $ do
+            (origVecs,rVecs) <- do
                 let l = convLattice (fromIntegral n)
                 origVecs <- replicateM (fromInteger i) (randomVec n)
                 let rVecs = map (encodeConv l) origVecs
                 pure (origVecs, rVecs)
 
-            (rVecsEnc :: [[Double]]) <-
-                tMeasureIO "encode" $
-                  forM rVecs (mapM encoder)
+            (rVecsEnc :: [[Double]]) <- forM rVecs (mapM encoder)
             let calcRes dc =
                     sum (map (\(a,b) -> dc b `diffV` a)
                              (origVecs `zip` rVecsEnc)) /
                     fromIntegral (i * n)
 
-            tMeasureIO "decode/measure" $
-                pure $ force $ calcRes decoder
+            pure $ force $ calcRes decoder
     let fromDB :: Double -> Double
         fromDB x = 10 ** (x / 10)
 
@@ -1324,27 +1318,3 @@ task88 i = do
                 , MainTitle "Real error probability compared to the estimate"
                 , Grid] $
         map f2d (datasets <> datasets2)
-
-----------------------------------------------------------------------------
--- Trash
-----------------------------------------------------------------------------
-
-
-tMeasureIO :: (MonadIO m) => Text -> m a -> m a
-tMeasureIO = -- const identity
-             tMeasure putTextLn
-
--- | Takes the first time sample, executes action (forcing its
--- result), takes the second time sample, logs it.
-tMeasure :: (MonadIO m) => (Text -> m ()) -> Text -> m a -> m a
-tMeasure logAction label action = do
-    before <- liftIO Tm.getCurrentTime
-    !x <- action
-    after <- liftIO Tm.getCurrentTime
-    let d0 :: Integer
-        d0 = round $ 100000 * toRational (after `Tm.diffUTCTime` before)
-    let d1 :: Double = fromIntegral d0 / 100
-    logAction $ "tMeasure " <> label <> ": " <> formatFloatN d1 3 <> " ms"
-    pure x
-  where
-    formatFloatN n numOfDecimals = fromString $ N.showFFloat (Just numOfDecimals) n ""

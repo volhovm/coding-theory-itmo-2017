@@ -30,7 +30,6 @@ executable coding-theory-bin
                      , primes
                      , random >= 1.1
                      , reflection >= 2.1.2
-                     , time
                      , universum
                      , unordered-containers >= 0.2.8.0
   default-language:    Haskell2010
