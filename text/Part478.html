@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2018-06-15 Fri 15:11 -->
+<!-- 2018-06-20 Wed 12:28 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Теория информации, решения задач части 4,7,8</title>
@@ -256,22 +256,22 @@ for the JavaScript code in this tag.
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org22a0fdd">1. Задание 4.2</a></li>
-<li><a href="#orgb81ab14">2. Задание 4.4</a></li>
-<li><a href="#orgd7ca3f1">3. Задание 7.1</a></li>
-<li><a href="#org9dab972">4. Задание 7.6</a></li>
-<li><a href="#org07193cd">5. Задания 8.6-8.7</a></li>
-<li><a href="#org7882e30">6. Задание 8.8</a></li>
+<li><a href="#orgd5bdd62">1. Задание 4.2</a></li>
+<li><a href="#org660bf0b">2. Задание 4.4</a></li>
+<li><a href="#orgc81cb90">3. Задание 7.1</a></li>
+<li><a href="#org1f549e0">4. Задание 7.6</a></li>
+<li><a href="#orge1eaef8">5. Задания 8.6-8.7</a></li>
+<li><a href="#org6ee17b5">6. Задание 8.8</a></li>
 </ul>
 </div>
 </div>
 <p>
 Весь код для решения задач доступен в открытом репозитории:
 <a href="https://github.com/volhovm/coding-theory-itmo-2017">https://github.com/volhovm/coding-theory-itmo-2017</a>, большая часть
-алгоритмов реализована в файле `Lib.hs`.
+алгоритмов реализована в файле <code>Lib.hs</code>.
 </p>
-<div id="outline-container-org22a0fdd" class="outline-2">
-<h2 id="org22a0fdd"><span class="section-number-2">1</span> Задание 4.2</h2>
+<div id="outline-container-orgd5bdd62" class="outline-2">
+<h2 id="orgd5bdd62"><span class="section-number-2">1</span> Задание 4.2</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 Был написан код переборного декодирования по максимуму правдоподобия
@@ -314,8 +314,8 @@ for the JavaScript code in this tag.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb81ab14" class="outline-2">
-<h2 id="orgb81ab14"><span class="section-number-2">2</span> Задание 4.4</h2>
+<div id="outline-container-org660bf0b" class="outline-2">
+<h2 id="org660bf0b"><span class="section-number-2">2</span> Задание 4.4</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 Были написаны программы построения решеток (синдромной и через МСФ),
@@ -352,8 +352,8 @@ H =
 </div>
 </div>
 
-<div id="outline-container-orgd7ca3f1" class="outline-2">
-<h2 id="orgd7ca3f1"><span class="section-number-2">3</span> Задание 7.1</h2>
+<div id="outline-container-orgc81cb90" class="outline-2">
+<h2 id="orgc81cb90"><span class="section-number-2">3</span> Задание 7.1</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 ЛРОС тривиально строится перебором для небольших значений длины
@@ -368,8 +368,8 @@ H =
 </p>
 </div>
 </div>
-<div id="outline-container-org9dab972" class="outline-2">
-<h2 id="org9dab972"><span class="section-number-2">4</span> Задание 7.6</h2>
+<div id="outline-container-org1f549e0" class="outline-2">
+<h2 id="org1f549e0"><span class="section-number-2">4</span> Задание 7.6</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Я реализиловал необходимые утилиты для построения БЧХ кодов и
@@ -437,8 +437,8 @@ g(x) &= 1 + x + x^2 + x^3 + x^6 + x^7 + x^9 + x^{15} + x^{16} + x^{17} + x^{18}
 </p>
 </div>
 </div>
-<div id="outline-container-org07193cd" class="outline-2">
-<h2 id="org07193cd"><span class="section-number-2">5</span> Задания 8.6-8.7</h2>
+<div id="outline-container-orge1eaef8" class="outline-2">
+<h2 id="orge1eaef8"><span class="section-number-2">5</span> Задания 8.6-8.7</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 Мой вариант (87) предполагает работу со сверточным кодом \((4,5,6)\),
@@ -461,9 +461,9 @@ g(x) &= 1 + x + x^2 + x^3 + x^6 + x^7 + x^9 + x^{15} + x^{16} + x^{17} + x^{18}
 
 \begin{align*}
 g_0 &= D^3 g_1 \\
-g_1 &= D g_2 + D^3 g_3 \\
-g_2 &= D^3 I g_1 + D I \\
-g_3 &= D^2 I g_2 + D^3 I g_3
+g_1 &= D g_2 + D^2 g_3 \\
+g_2 &= D^2 I g_1 + D I \\
+g_3 &= D I g_3 + D^2 I g_2
 \end{align*}
 
 <p>
@@ -472,27 +472,33 @@ g_3 &= D^2 I g_2 + D^3 I g_3
 </p>
 
 \begin{align*}
-T(D,I) &= \frac{-D^5 I + D^8 I^2 - D^9 I^2}{-1 + D^3 I + D^4 I - D^7 I^2 + D^8 I^2} \\ \\
-F(D) &= \frac{- D^12 + D^11 + 2 D^9 - 2 D^8 + D^5}{(D^8 - D^7 + D^4 + D^3 - 1)^2}
+T(D,I) &= -\frac{D^5 I (1 - D I + D^3 I)}{-1 + D I + D^3 I - D^4 I^2 + D^6 I^2} \\ \\
+F(D) &= \frac{-d^9 + 2 d^8 + d^7 - 2 d^6 + d^5}{(d^6 - d^4 + d^3 + d - 1)^2}
 \end{align*}
 
 <p>
 Также сразу приложим вычисления необходимые для задания 8.7. Нам
-предлагается также построить графики оценки вероятности ошибки для
-кода со спектром, равным усеченному \(T(D,I)\). Для этого представим
-$T(D,I)$4 в виде ряда (по возрастающей степени \(I\)) и возьмем из
-него 10 и 5 элементов соответственно:
+предлагается построить графики оценки вероятности ошибки для кода со
+спектром, равным усеченному \(T(D,I)\). Для этого представим $T(D,I)$4
+в виде ряда (по возрастающей степени \(I\)) и возьмем из него 10 и 5
+элементов соответственно:
 </p>
 
 \begin{align*}
-T(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4 +
-         2 D^{16} I^4 + 5 D^{17} I^4 + D^{18} I^5 + 2 D^{19} I^5 + \\
-         &5 D^{20} I^5 + D^{21} I^5 (I + 8) + 2 D^{22} I^6 +
-         6 D^{23} I^6 + D^{24} I^6 (I + 10) + O(D^{25})\\ \\
-T_5(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4\\
-T_{10}(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4 +
-         2 D^{16} I^4 + 5 D^{17} I^4 + D^{18} I^5 + 2 D^{19} I^5 + 5 D^{20} I^5
+T(D,I) = & D^5 I + 2 D^8 I^2 + D^9 I^3 + D^{10} I^4 + D^{11} I^3 (I^2 + 3) + \\
+         & D^{12} I^4 (I^2 + 2) + D^{13} I^5 (I^2 + 2) + D^{14} I^4 (I^4 + 2 I^2 + 5) + O(D^{15})
+\end{align*}
 
+<p>
+Как видим, разложение соответствует диаграмме &#x2013; несложно обнаружить
+один путь веса 5, два пути веса 8, и так далее. Усеченные
+производящие функции кода имеют вид:
+</p>
+
+\begin{align*}
+T_5(D,I) &= D^5 I + 2 D^8 I^2 + D^9 I^3 + D^{10} I^4 + 3 D^{11} I^5 \\
+T_{10}(D,I) &= D^5 I + 2 D^8 I^2 + D^9 I^3 + D^{10} I^4 + D^{11} I^3 (I^2 + 3) +
+               D^{12} I^4 (I^2 + 2) + D^{13} I^5 (I^2 + 2)
 \end{align*}
 
 <p>
@@ -500,9 +506,8 @@ T_{10}(D,I) = &D^5 I + 2 D^9 I^2 + D^{12} I^3 + 3 D^{13} I^3 + D^{15} I^4 +
 </p>
 
 \begin{align*}
-F_5(D) = &4 D^{15} + 9 D^{13} + 3 D^{12} + 4 D^9 + D^5\\
-F_{10}(D) = &25 D^{20} + 10 D^{19} + 5 D^{18} + 20 D^{17} + 8 D^{16} +
-          4 D^{15} + 9 D^{13} + 3 D^{12} + 4 D^9 + D^5
+F_{5}(D) &= D^5 + 4 D^8 + 3 D^9 + 4 D^{10} + 14 D^{11} \\
+F_{10}(D) &= D^5 + 4 D^8 + 3 D^9 + 4 D^{10} + 14 D^{11} + 14 D^{12} + 17 D^{13} + 40 D^{14} + 48 D^{15} + 62 D^{16}
 \end{align*}
 
 <p>
@@ -519,25 +524,55 @@ F_{10}(D) = &25 D^{20} + 10 D^{19} + 5 D^{18} + 20 D^{17} + 8 D^{16} +
 </div>
 
 <p>
-Оценке вероятности на ДСК соответствуют функции DSC (discrete
-stationary channel), на АБГШ &#x2013; AWGN (abstract white gaussian
-noise). Цифрам 5 и 10 соответствуют усеченные спектры кода. Как
-можно видеть из графика, оригинальные значения имеют выраженный
-спайк, а менее точные приближения (с точки зрения наличия меньшего
-количества элементов разложения) сглажены в этом месте. Кроме того,
-верхняя граница на вероятность ошибки у АБГШ существенно меньше &#x2013;
-впрочем, это не вызывает удивления (примерно такой же результат был
-получен и в (4.2)).
+На графике показана зависимость оценки вероятности ошибки на бит (ее
+логарифм, показаны показатели степени по основанию 10) от отношения
+сигнал/шум на сигнал (в дБ). Оценке вероятности на ДСК соответствуют
+функции DSC (discrete stationary channel), на АБГШ &#x2013; AWGN (abstract
+white gaussian noise). Цифрам 5 и 10 соответствуют усеченные спектры
+кода. Как можно видеть из графика, оригинальные значения имеют
+выраженный спайк, а менее точные приближения (с точки зрения наличия
+меньшего количества элементов разложения) сглажены в этом
+месте. Кроме того, верхняя граница на вероятность ошибки у АБГШ
+существенно меньше &#x2013; впрочем, это не вызывает удивления ( такой же
+результат был получен и в (4.2)).
 </p>
 </div>
 </div>
-<div id="outline-container-org7882e30" class="outline-2">
-<h2 id="org7882e30"><span class="section-number-2">6</span> Задание 8.8</h2>
+<div id="outline-container-org6ee17b5" class="outline-2">
+<h2 id="org6ee17b5"><span class="section-number-2">6</span> Задание 8.8</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+В этом задании я реализовал декодер максимального правдоподобия для
+усеченного сверточного кода &#x2013; референс реализация через перебор
+всех кодовых слов и декодер Витерби (который работает, ожидаемо,
+быстрее). Далее экспериментальная ошибка на бит при декодировании
+была построена на графике для сравнения с экспериментальной верхней
+границей, полученной в предыдущем упражнении.
+</p>
+
+
+<div class="figure">
+<p><img src="./convolution_real.png" alt="convolution_real.png" width="75%" />
+</p>
+</div>
+
+<p>
+Как видим, верхняя граница действительно выше экспериментальных
+данных. Более того, граница при декодировании с АБГШ ближе к
+реальным данным, что и было предсказуемо ("&#x2026;при высоких отношениях
+сигнал/шум&#x2026;аддитивные оценки дают вполне приемлимые по точности
+результаты", стр. 239 учебника). В моих подсчетах я использовал
+усеченную решетку длины \(L = 5\) &#x2013; экспериментально удостоверился,
+что графики для более высоких значений почти не отличаются, но с
+которткими решетками существенно быстрее работает кодирование и
+декодирование.
+</p>
+</div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Волхов Михаил, M4139</p>
-<p class="date">Created: 2018-06-15 Fri 15:11</p>
+<p class="date">Created: 2018-06-20 Wed 12:28</p>
 <p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

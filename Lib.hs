@@ -30,27 +30,20 @@ import qualified Data.HashSet as HS
 import Data.List (elemIndex, findIndex, groupBy, head, last, nub, (!!))
 import Data.Map.Strict ((!))
 import qualified Data.Map.Strict as M
+import Data.Random.Normal (normalIO')
 import GHC.Conc (par)
 import Graphics.EasyPlot
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random
+
+import qualified Data.Time.Clock as Tm
+import Numeric as N
 
 import Fields
 
 ----------------------------------------------------------------------------
 -- Utilities
 ----------------------------------------------------------------------------
-
-randomGaussian :: (Floating a, Random a) => a -> a -> IO a
-randomGaussian mean sigma = do
-    [u1,u2] <- replicateM 2 $ randomRIO (0,1)
-    let r = sqrt (-2 * log u1)
-    let t = 2 * pi * u2
-    let x = r * cos t
-    pure $ x * sigma + mean
-
-randomNormal :: (Floating a, Random a) => IO a
-randomNormal = randomGaussian 0 1
 
 -- Vertical vector
 type BVector = [Bool]
@@ -83,10 +76,12 @@ intToBool :: Integer -> Bool
 intToBool 1 = True
 intToBool 0 = False
 intToBool _ = error "intToBool"
+{-# INLINE intToBool #-}
 
-boolToInt :: Integral n => Bool -> n
+boolToInt :: Num n => Bool -> n
 boolToInt False = 0
 boolToInt True  = 1
+{-# INLINE boolToInt #-}
 
 fromIntVector :: [Integer] -> [Bool]
 fromIntVector = map intToBool
@@ -337,21 +332,6 @@ task215 =
 checkGH :: BMatrix -> BMatrix -> Bool
 checkGH g h = isNullM $ g `mMulM` transpose h
 
-{-
--- | Finds g given h.
-findGfromH :: [BVector] -> [BVector]
-findGfromH h =
-    fromMaybe (error "can't happen2") $
-    find (\g -> formsBasis g && checkGH g h) allPossibleG
-  where
-    formsBasis g = not $ linearDependent $ transpose g
-
-    allPossibleG = combinations (fromIntegral n) $ binaryVectors k
-    n = length h
-    r = length $ head h
-    k = n - r
--}
-
 boolToZ = map (map (bool (Z 0) (Z 1)))
 zToBool = let x (Z 0) = False
               x (Z 1) = True
@@ -529,9 +509,7 @@ dsc ε = curry $ \case
 dscEncode :: Double -> Encoder
 dscEncode ε b = do
     r <- randomRIO (0,1)
-    pure $ case bool b (not b) $ r < ε of
-      False -> 0
-      True  -> 1
+    pure $ boolToInt $ bool b (not b) $ r < ε
 
 -- | Additive white gaussian noise.
 awgn :: Double -> Double -> Channel
@@ -548,7 +526,7 @@ awgnEncode :: Double -> Double -> Encoder
 awgnEncode n0 e v0 = do
     let se = sqrt e
     let v = bool (-se) se v0
-    randomGaussian v (n0/2)
+    normalIO' (v, sqrt(n0/2))
 
 -- | Maximum likelihood decoder.
 decodeML :: Channel -> [BVector] -> [Double] -> BVector
@@ -608,20 +586,23 @@ task42 i = do
     let n :: Integer
         n = fromIntegral $ length g23
     let code = codeG g
-    let diffV x y = weight $ x `sumBVectors` y
+    let diffV x y = fromIntegral $ weight $ x `sumBVectors` y
     rVecsVar <-
         newIORef =<<
         map (code !!) <$> replicateM (fromInteger i) (randomRIO (0,length code - 1))
     let funcGen :: Encoder -> Decoder -> Decoder -> (Double,Double)
         funcGen encoder decoder1 decoder2 = unsafePerformIO $ fmap force $ do
-            (rVecsEnc :: [(BVector,[Double])]) <-
+            (rVecsEnc1 :: [(BVector,[Double])]) <-
                 readIORef rVecsVar >>= \rVecs ->
                 forM rVecs (\r -> (r,) <$> mapM encoder r)
-            let calcRes dc =
-                    sum (map (\(a,b) -> fromIntegral $ dc b `diffV` a) rVecsEnc) /
+            (rVecsEnc2 :: [(BVector,[Double])]) <-
+                readIORef rVecsVar >>= \rVecs ->
+                forM rVecs (\r -> (r,) <$> mapM encoder r)
+            let calcRes vecs dc =
+                    sum (map (\(a,b) -> dc b `diffV` a) vecs) /
                     fromIntegral (i * n)
-            let r1 = force $ calcRes decoder1
-            let r2 = force $ calcRes decoder2
+            let r1 = force $ calcRes rVecsEnc1 decoder1
+            let r2 = force $ calcRes rVecsEnc2 decoder2
             pure $ r1 `par` r2 `par` (r1,r2)
     let fromdecibels :: Double -> Double
         fromdecibels x = 10 ** (x / 10)
@@ -631,14 +612,14 @@ task42 i = do
                        (decodeML (dsc e) code)
                        (decodeMaxAp (dsc e) code)
     let awgnDo (fromdecibels -> en0) =
-            let e = 5
+            let e = 5 -- it doesn't matter what to choose anyway
                 n0 = e / en0
             in funcGen (awgnEncode n0 e) (decodeML (awgn n0 e) code)
                                          (decodeMaxAp (awgn n0 e) code)
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
     let yToLog (x,y) = (x,log10 y)
-    let frange1 = [-2..4]++[4.5,4.7..8.5]
-    let frange2 = [-2..4]++[4.1,4.2..4.9]
+    let frange1 = [-2..4]++[4.5,4.7..7]
+    let frange2 = [-2..3]++[3.1,3.2..5.2]
 
     (datasets :: [(String,[(Double,Double)])]) <-
         map (second (map yToLog)) . concat <$>
@@ -648,7 +629,7 @@ task42 i = do
               points <-
                   mapM (\x -> do putStrLn $ "calculating " <> t <> " in " <> show x
                                  res <- pure $ force $ f x
-                                 putText $ "res is : " <> show res
+                                 putTextLn $ "res is : " <> show res
                                  pure $ force $ (x, res)) rng
               let points1 = map (second fst) points
               let points2 = map (second snd) points
@@ -657,7 +638,11 @@ task42 i = do
               pure ret)
         [ ("DSC", dscDo, frange1), ("AWGN", awgnDo, frange2) ]
     print datasets
-    void $ plot [SVG "task42PlotDimqTemp.svg"] $ map f2d datasets
+
+    void $ plot [ SVG "task42Plot.svg"
+                , Labels "Eb/N0 (dB)" "log10(Epb)"
+                , Grid]
+                (map f2d datasets)
 
 
 type Lattice v e = [[(v, Map Int e)]]
@@ -1186,11 +1171,6 @@ convLattice l
           , mkl [("111",0)] ]
         ]
 
---(!!!) :: (Show a) => [a] -> Text -> Int -> a
---(!!!) a t s = case drop s a of
---                 []    -> error $ "!!!" <> show (a,t,s)
---                 (x:_) -> x
-
 encodeConv :: ConvLattice -> BVector -> BVector
 encodeConv lat ((++ [False,False]) -> v) = go lat v 0 0
   where
@@ -1220,8 +1200,6 @@ decodeConvML chan lat y = maxWord
 decodeConv :: Channel -> ConvLattice -> Decoder
 decodeConv chan lat y0 = reverse $ drop 2 $ reverse $ go lat y0 [([],0)]
   where
-    ---- L(y), page 97, we're trying to maximise the ∑|L(y)|
-    --reliability yi = log $ (chan False yi) / (chan True yi)
     likelihood ci yi = log $ chan ci yi
     likelihoodMany c y = sum $ map (uncurry likelihood) (c `zip` y)
 
@@ -1271,11 +1249,6 @@ testDecodeConv = do
 
         when (back1 /= back2) $ dump >> error "Decoders are not equivalent"
         when (back1 /= oVec) $ dump >> error "Decode error"
---    print $ back == origVecs
---    print $ decodeConv (dsc 0.1) l $
---        map (fromIntegral . boolToInt) $ fromStrVec "110101111000"
---    print $ decodeConv (dsc 0.1) l $
---        map (fromIntegral . boolToInt) $ fromStrVec "010001111000"
   where
     spoil :: Int -> BVector -> IO BVector
     spoil n v = do
@@ -1289,30 +1262,28 @@ randomVec n = randomIO >>= \b -> ((:) b) <$> randomVec (n-1)
 task88 :: Integer -> IO ()
 task88 i = do
     putText "task88"
-    let diffV x y = weight $ x `sumBVectors` y
-
-    (rVecsVar :: IORef (Map Integer ([BVector],[BVector]))) <- newIORef mempty
+    --let diffV x y = fromIntegral $ weight $ x `sumBVectors` y
+    let diffV x y = if x /= y then 1 else 0
 
     -- k = 1; n, enc, dec are passed
     let funcGen :: Integer -> Encoder -> Decoder -> Double
         funcGen n encoder decoder = unsafePerformIO $ fmap force $ do
-            (origVecs,rVecs) <-
-                M.lookup n <$> readIORef rVecsVar >>= \case
-                  Just x -> pure x
-                  Nothing -> do
-                      let l = convLattice (fromIntegral n)
-                      origVecs <- replicateM (fromInteger i) (randomVec n)
-                      let rVecs = map (encodeConv l) origVecs
-                      atomicModifyIORef rVecsVar $ \v ->
-                          (v & at n .~ Just (origVecs, rVecs),())
-                      pure (origVecs, rVecs)
+            (origVecs,rVecs) <- tMeasureIO "genVecs" $ do
+                let l = convLattice (fromIntegral n)
+                origVecs <- replicateM (fromInteger i) (randomVec n)
+                let rVecs = map (encodeConv l) origVecs
+                pure (origVecs, rVecs)
 
-            (rVecsEnc :: [[Double]]) <- forM rVecs (mapM encoder)
+            (rVecsEnc :: [[Double]]) <-
+                tMeasureIO "encode" $
+                  forM rVecs (mapM encoder)
             let calcRes dc =
-                    sum (map (\(a,b) -> fromIntegral $ dc b `diffV` a)
+                    sum (map (\(a,b) -> dc b `diffV` a)
                              (origVecs `zip` rVecsEnc)) /
                     fromIntegral (i * n)
-            pure $ force $ calcRes decoder
+
+            tMeasureIO "decode/measure" $
+                pure $ force $ calcRes decoder
     let fromDB :: Double -> Double
         fromDB x = 10 ** (x / 10)
 
@@ -1329,28 +1300,51 @@ task88 i = do
                        (decodeConv (awgn n0 e) (convLattice (fromIntegral n)))
 
     let f2d (t,f) = Data2D [Title t, Style Lines] [] f
-    let frange = [-2,-1.8..6]
 
-    let pat t foo = (t, map (\x -> (x, log10 $ foo (fromDB x))) frange)
+    let pat t foo r = (t, map (\x -> (x, log10 $ foo (fromDB x))) r)
+    -- I choose length 4, because experiments show that choosing
+    -- longer lattices (almost) doesn't affect the data -- though,
+    -- working with short lattices is much faster.
     (datasets :: [(String,[(Double,Double)])]) <-
         pure $ [
-                 pat "DSC" (dscDo 4)
-               , pat "AWGN" (awgnDo 4)
---                 pat "DSC" (dscDoML 4)
---               , pat "AWGN" (awgnDoML 4)
+                 pat "DSC" (dscDo 4) [-2,-1.8..5.5]
+               , pat "AWGN" (awgnDo 4) [-2,-1.8..3.5]
                ]
 
     print datasets
 
-    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromDB x))) [-2,-1.95..8])
+    let patt t c chan = (t, map (\x -> (x,log10 $ convError c chan (fromDB x))) [-2,-1.95..5.5])
     let (datasets2 :: [(String,[(Double,Double)])]) =
-            [ patt "Bound AWGN" myConvCode awgnConvChan
-            , patt "Bound DSC" myConvCode dscConvChan
---            , patt "Example AWGN" exampleConvCode awgnConvChan
---            , patt "Example DSC" exampleConvCode dscConvChan
+            [ patt "Bound DSC" myConvCode dscConvChan
+            , patt "Bound AWGN" myConvCode awgnConvChan
             ]
 
     void $ plot [ SVG "conv_extra.svg"
-                , Labels "Eb/N0 (dB)" "log10(Epb)", MainTitle "Big great plot", Grid] $
+                , Labels "Eb/N0 (dB)" "log10(Epb)"
+                , MainTitle "Real error probability compared to the estimate"
+                , Grid] $
         map f2d (datasets <> datasets2)
-    --void $ plot (SVG "wat.svg") [ \x -> x, \x -> 1 / (2**x), \x -> log10 $ 8 ** x]
+
+----------------------------------------------------------------------------
+-- Trash
+----------------------------------------------------------------------------
+
+
+tMeasureIO :: (MonadIO m) => Text -> m a -> m a
+tMeasureIO = -- const identity
+             tMeasure putTextLn
+
+-- | Takes the first time sample, executes action (forcing its
+-- result), takes the second time sample, logs it.
+tMeasure :: (MonadIO m) => (Text -> m ()) -> Text -> m a -> m a
+tMeasure logAction label action = do
+    before <- liftIO Tm.getCurrentTime
+    !x <- action
+    after <- liftIO Tm.getCurrentTime
+    let d0 :: Integer
+        d0 = round $ 100000 * toRational (after `Tm.diffUTCTime` before)
+    let d1 :: Double = fromIntegral d0 / 100
+    logAction $ "tMeasure " <> label <> ": " <> formatFloatN d1 3 <> " ms"
+    pure x
+  where
+    formatFloatN n numOfDecimals = fromString $ N.showFFloat (Just numOfDecimals) n ""
